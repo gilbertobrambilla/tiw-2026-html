@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Project Management</title>
+    <link rel="stylesheet" th:href="@{/global.css}">
+</head>
+<body>
+
+<div class="navbar">
+    <span>Project Management System</span>
+</div>
+
+<div class="wrapper login-wrapper">
+    <div class="row">
+        <div class="form-container">
+            <h3>System Login</h3>
+
+            <form action="login" method="POST">
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" name="username" th:value="${usernameValue}" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" name="password" required autocomplete="off">
+                </div>
+
+                <button type="submit" class="btn">LOGIN</button>
+
+                <span class="error-msg-generic" th:if="${loginError != null}" th:text="${loginError}"></span>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
