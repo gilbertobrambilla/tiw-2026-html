@@ -1,0 +1,628 @@
+/* =========================================
+   PROJECT MANAGEMENT - GLOBAL STYLESHEET
+   =========================================
+   1. VARIABLES & RESET
+   2. TYPOGRAPHY & BASE
+   3. SHARED COMPONENTS
+   4. FORMS & BUTTONS
+   5. LOGIN & WELCOME PAGES
+   6. admin SECTION
+   7. MANAGER SECTION
+   8. COLLABORATOR SECTION
+   ========================================= */
+
+/* --- 1. VARIABLES & RESET --- */
+:root {
+    --dark-green: #234d20;
+    --mid-green: #36802d;
+    --light-green: #77ab59;
+    --bg-color: #f4f7f6;
+    --border-color: #ddd;
+    --error-color: #d9534f;
+    --error-bg: #fdf7f7;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+/* --- 2. TYPOGRAPHY & BASE --- */
+h2, h3 {
+    color: var(--dark-green);
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* --- 3. SHARED COMPONENTS --- */
+.navbar {
+    background-color: var(--dark-green);
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* navigation links default styling without bold weight */
+.navbar a {
+    color: white;
+    text-decoration: none;
+    font-weight: normal;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+}
+
+/* navigation links hover appearance */
+.navbar a:hover {
+    opacity: 1;
+}
+
+/* wrapper for the navigation menu elements */
+.navbar .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* visual separator styling */
+.navbar .nav-separator {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: normal;
+    user-select: none;
+}
+
+/* active navigation item highlights with bold text and bottom border */
+.navbar .active-nav {
+    color: white;
+    font-weight: bold;
+    border-bottom: 2px solid white;
+    padding-bottom: 2px;
+}
+
+.wrapper {
+    max-width: 1280px;
+    margin: 30px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 0 20px;
+}
+
+.row {
+    display: flex;
+    justify-content: center;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    padding: 30px;
+    border-top: 4px solid var(--mid-green);
+}
+
+.form-container {
+    width: 100%;
+    max-width: 600px;
+}
+
+/* --- 4. FORMS & BUTTONS --- */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 18px;
+}
+
+label {
+    margin-bottom: 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #444;
+}
+
+input, select, textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.95em;
+    width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--mid-green);
+    box-shadow: 0 0 0 3px rgba(54, 128, 45, 0.1);
+}
+
+.form-row-double {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row-double .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.btn {
+    background-color: var(--mid-green);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1em;
+    width: 100%;
+    transition: background 0.3s, transform 0.1s;
+    margin-top: 10px;
+}
+
+.btn:hover {
+    background-color: var(--dark-green);
+}
+
+.btn:active {
+    transform: scale(0.99);
+}
+
+.error-text {
+    color: var(--error-color);
+    font-size: 0.85em;
+    margin-top: 5px;
+    display: block;
+    font-weight: 500;
+}
+
+.error-msg-generic {
+    color: var(--error-color);
+    background: var(--error-bg);
+    padding: 12px;
+    border-left: 4px solid var(--error-color);
+    margin-top: 15px;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9em;
+    font-weight: 500;
+    text-align: center;
+    display: block;
+}
+
+/* --- 5. LOGIN & WELCOME PAGES --- */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+.welcome-options {
+    width: 100%;
+    max-width: 500px;
+    flex-direction: column;
+    text-align: center;
+}
+
+.welcome-msg {
+    margin-bottom: 25px;
+    color: #555;
+}
+
+.btn-secondary {
+    background-color: var(--light-green);
+}
+
+.btn-link {
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* =========================================
+   6. ADMIN SECTION - VERIFY PROJECTS
+   ========================================= */
+.layout-split {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.sidebar-list {
+    flex: 1;
+    max-width: 300px;
+    background: white;
+    padding-right: 15px;
+}
+
+.sidebar-list h3 {
+    text-align: left;
+    border-bottom: 2px solid var(--mid-green);
+    padding-bottom: 8px;
+}
+
+.sidebar-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-list li {
+    margin-bottom: 8px;
+}
+
+.sidebar-list a {
+    display: block;
+    padding: 12px 15px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
+    font-weight: 500;
+}
+
+.sidebar-list a:hover {
+    background-color: #e8f0e7;
+    color: var(--dark-green);
+}
+
+.sidebar-list a.active-link {
+    background-color: var(--mid-green);
+    color: white;
+    font-weight: bold;
+}
+
+.tree-container {
+    flex: 2;
+    background: white;
+}
+
+.tree-container h3 {
+    text-align: left;
+}
+
+.placeholder-text {
+    color: #777;
+    text-align: center;
+    padding: 60px 20px;
+    font-style: italic;
+    font-size: 1.05em;
+}
+
+.project-tree {
+    padding: 20px;
+    background-color: #fafafa;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.tree-project-node {
+    font-size: 1.15em;
+    color: var(--dark-green);
+}
+
+.tree-wp-node {
+    margin-left: 20px;
+    margin-top: 20px;
+    padding-left: 20px;
+    border-left: 3px solid var(--light-green);
+}
+
+.tree-wp-node .node-title {
+    font-weight: bold;
+    color: var(--mid-green);
+    font-size: 1.05em;
+}
+
+.tree-wp-node .node-meta {
+    font-size: 0.85em;
+    color: #666;
+    margin-left: 10px;
+}
+
+.tree-task-list {
+    list-style: none;
+    padding-left: 15px;
+    margin-top: 10px;
+}
+
+.tree-task-list li {
+    background: white;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+
+.task-code {
+    font-weight: bold;
+    color: #444;
+}
+
+.task-details {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 6px;
+    background-color: #f9f9f9;
+    padding: 6px 10px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.task-desc-text {
+    margin: 4px 0 8px 0;
+    font-size: 0.9em;
+    color: #666;
+    font-style: italic;
+}
+
+/* =========================================
+   7. MANAGER SECTION - HOME RESPONSABILE
+   ========================================= */
+.task-info-summary {
+    background-color: #e8f0e7;
+    color: var(--dark-green);
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 0.95em;
+    border-left: 4px solid var(--mid-green);
+}
+
+.form-container h4 {
+    color: var(--mid-green);
+    margin-top: 30px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 6px;
+    font-size: 1.1em;
+}
+
+.months-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.month-input-group {
+    margin-bottom: 0;
+}
+
+.checkbox-list {
+    background: #fafafa;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 5px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.checkbox-item:last-child {
+    margin-bottom: 0;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.checkbox-item label {
+    margin-bottom: 0;
+    font-weight: normal;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+.margin-top-20 {
+    margin-top: 25px;
+}
+
+/* =========================================
+   SHARED COMPONENTS - DATA TABLES
+   ========================================= */
+.layout-full-width {
+    width: 100%;
+}
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+
+.data-table th, .data-table td {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    text-align: center;
+}
+
+.data-table th {
+    background-color: var(--dark-green);
+    color: white;
+    font-weight: bold;
+}
+
+.data-table .sub-th {
+    background-color: var(--mid-green);
+    font-size: 0.85em;
+}
+
+.data-table .sub-th.worked-th, .data-table .worked-cell {
+    background-color: #e8f0e7; /* Sfondo leggero per evidenziare "Lavorate" */
+    color: var(--dark-green);
+    font-weight: 500;
+}
+
+.data-table .row-wp td {
+    background-color: var(--light-green);
+    color: white;
+    font-weight: bold;
+    text-align: left;
+    padding-left: 15px;
+}
+
+.data-table .row-project td {
+    background-color: #333;
+    color: white;
+    font-weight: bold;
+    text-align: left;
+    padding-left: 15px;
+}
+
+.data-table .row-wp-sub td {
+    background-color: #ddd;
+    color: #333;
+    font-weight: bold;
+    text-align: left;
+    padding-left: 30px;
+}
+
+.data-table .empty-cell {
+    border-bottom: none;
+    border-top: none;
+    background-color: transparent;
+    width: 20px;
+}
+
+.data-table .task-name {
+    text-align: left;
+    font-weight: bold;
+    color: var(--dark-green);
+}
+
+.btn-conclude {
+    background-color: #28a745;
+    margin-top: 20px;
+    max-width: 300px;
+}
+
+.conclude-section {
+    margin-top: 25px;
+    padding: 20px;
+    border: 2px dashed #28a745;
+    border-radius: 6px;
+    text-align: center;
+    background-color: #f9fff9;
+}
+
+.success-msg {
+    color: #28a745;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* =========================================
+   8. COLLABORATOR SECTION
+   ========================================= */
+.sidebar-nav {
+    flex: 1;
+    max-width: 350px;
+    background: white;
+    padding-right: 15px;
+    border-right: 1px solid var(--border-color);
+}
+
+.collab-proj-list, .collab-wp-list, .collab-task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.collab-proj-list > li {
+    margin-bottom: 15px;
+}
+
+.proj-link {
+    display: block;
+    padding: 10px;
+    background-color: #f4f7f6;
+    border-left: 4px solid var(--border-color);
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.proj-link:hover, .proj-link.active-proj {
+    border-left-color: var(--dark-green);
+    background-color: #e8f0e7;
+    color: var(--dark-green);
+}
+
+.collab-wp-list {
+    margin-top: 10px;
+    padding-left: 15px;
+}
+
+.wp-title {
+    font-size: 0.9em;
+    color: var(--mid-green);
+    font-weight: bold;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 3px;
+}
+
+.collab-task-list {
+    padding-left: 15px;
+    margin-bottom: 15px;
+}
+
+.task-link {
+    display: block;
+    padding: 6px 10px;
+    font-size: 0.9em;
+    text-decoration: none;
+    color: #555;
+    border-radius: 4px;
+}
+
+.task-link:hover, .task-link.active-task {
+    background-color: var(--mid-green);
+    color: white;
+}
+
+.task-work-container {
+    flex: 2;
+    padding-left: 20px;
+}
+
+.task-header-info {
+    background: #fdfdfd;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.task-header-info p {
+    margin: 8px 0;
+    color: #444;
+}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Administrator Home - Project Management</title>
+    <link rel="stylesheet" th:href="@{/global.css}">
+</head>
+<body>
+
+<div class="navbar">
+    <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Admin</span>
+    <div class="nav-links">
+        <span class="active-nav">Home</span>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/admin/verify-projects}">Verify Projects</a>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/logout}">Logout</a>
+    </div>
+</div>
+
+<div class="wrapper">
+    <div class="row">
+        <div class="form-container">
+            <h3>Create New Project</h3>
+            <form th:action="@{/admin/create-project}" method="POST">
+
+                <div class="form-group">
+                    <label>Project Title:</label>
+                    <input type="text" name="title" th:value="${projectTitleValue}" required maxlength="100">
+                    <span class="error-text" th:if="${projectTitleError != null}" th:text="${projectTitleError}"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Duration (in months):</label>
+                    <input type="number" name="duration" th:value="${projectDurationValue}" min="1" required>
+                    <span class="error-text" th:if="${projectDurationError != null}" th:text="${projectDurationError}"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Technical Manager:</label>
+                    <select name="managedBy" required>
+                        <option value="">-- Select Technical User --</option>
+                        <option th:each="u : ${technicalUsers}"
+                                th:value="${u.id}"
+                                th:text="${u.firstName + ' ' + u.lastName}"
+                                th:selected="${u.id == projectManagedByValue}">
+                        </option>
+                    </select>
+                    <span class="error-text" th:if="${projectManagedByError != null}" th:text="${projectManagedByError}"></span>
+                </div>
+
+                <button type="submit" class="btn">SAVE PROJECT</button>
+
+                <span class="error-msg-generic" th:if="${projectGenericError != null}" th:text="${projectGenericError}"></span>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-container">
+            <h3>Create New WP</h3>
+            <form th:action="@{/admin/create-wp}" method="POST">
+
+                <div class="form-group">
+                    <label>Assign to Project:</label>
+                    <select name="projectId" required>
+                        <option value="">-- Select Project (Status: Created Only) --</option>
+                        <option th:each="p : ${createdProjects}"
+                                th:value="${p.id}"
+                                th:text="${p.title}"
+                                th:selected="${p.id == wpProjectIdValue}">
+                        </option>
+                    </select>
+                    <span class="error-text" th:if="${wpProjectError != null}" th:text="${wpProjectError}"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>WP Title:</label>
+                    <input type="text" name="title" th:value="${wpTitleValue}" required maxlength="100">
+                    <span class="error-text" th:if="${wpTitleError != null}" th:text="${wpTitleError}"></span>
+                </div>
+
+                <div class="form-row-double">
+                    <div class="form-group">
+                        <label>Start Month:</label>
+                        <input type="number" name="startMonth" th:value="${wpStartMonthValue}" min="1" required>
+                        <span class="error-text" th:if="${wpStartMonthError != null}" th:text="${wpStartMonthError}"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>End Month:</label>
+                        <input type="number" name="endMonth" th:value="${wpEndMonthValue}" min="1" required>
+                        <span class="error-text" th:if="${wpEndMonthError != null}" th:text="${wpEndMonthError}"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn">SAVE WP</button>
+
+                <span class="error-msg-generic" th:if="${wpGenericError != null}" th:text="${wpGenericError}"></span>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-container">
+            <h3>Create New Task</h3>
+            <form th:action="@{/admin/create-task}" method="POST">
+
+                <div class="form-group">
+                    <label>Assign to WP:</label>
+                    <select name="wpId" required>
+                        <option value="">-- Select WP --</option>
+
+                        <th:block th:each="entry : ${projectWpMap}">
+
+                            <option disabled th:text="${'--- PROJECT: ' + entry.key.title + ' ---'}"></option>
+
+                            <option th:each="wp : ${entry.value}"
+                                    th:value="${wp.id}"
+                                    th:text="${'WP' + wp.sequenceNumber + ' - ' + wp.title}"
+                                    th:selected="${wp.id == taskWpValue}">
+                            </option>
+
+                        </th:block>
+                    </select>
+                    <span class="error-text" th:if="${taskWpError != null}" th:text="${taskWpError}"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Task Title:</label>
+                    <input type="text" name="title" th:value="${taskTitleValue}" required maxlength="100">
+                    <span class="error-text" th:if="${taskTitleError != null}" th:text="${taskTitleError}"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea name="description" th:text="${taskDescriptionValue}" required rows="3"></textarea>
+                    <span class="error-text" th:if="${taskDescriptionError != null}" th:text="${taskDescriptionError}"></span>
+                </div>
+
+                <div class="form-row-double">
+                    <div class="form-group">
+                        <label>Start Month:</label>
+                        <input type="number" name="startMonth" th:value="${taskStartMonthValue}" min="1" required>
+                        <span class="error-text" th:if="${taskStartMonthError != null}" th:text="${taskStartMonthError}"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>End Month:</label>
+                        <input type="number" name="endMonth" th:value="${taskEndMonthValue}" min="1" required>
+                        <span class="error-text" th:if="${taskEndMonthError != null}" th:text="${taskEndMonthError}"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn">SAVE TASK</button>
+
+                <span class="error-msg-generic" th:if="${taskGenericError != null}" th:text="${taskGenericError}"></span>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

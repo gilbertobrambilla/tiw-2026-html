@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Projects - Project Management</title>
+    <link rel="stylesheet" th:href="@{/global.css}">
+    <link rel="stylesheet" href="../../global.css">
+</head>
+<body>
+
+<div class="navbar">
+    <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Admin</span>
+    <div class="nav-links">
+        <a th:href="@{/admin/home}">Home</a>
+        <span class="nav-separator">|</span>
+        <span class="active-nav">Verify Projects</span>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/logout}">Logout</a>
+    </div>
+</div>
+
+<div class="wrapper">
+    <div class="row layout-split">
+
+        <div class="sidebar-list">
+            <h3>Your Projects</h3>
+
+            <ul th:unless="${#lists.isEmpty(projects)}">
+                <li th:each="p : ${projects}">
+                    <a th:href="@{/admin/verify-projects(projectId=${p.id})}"
+                       th:text="${p.title}"
+                       th:classappend="${selectedProject != null && selectedProject.id == p.id} ? 'active-link' : ''">Project</a>
+                </li>
+            </ul>
+
+            <p class="no-data-msg" th:if="${#lists.isEmpty(projects)}">No projects found.</p>
+        </div>
+
+        <div class="tree-container" th:if="${selectedProject != null}">
+            <h3 th:text="${'Project Structure: ' + selectedProject.title}">Project Structure</h3>
+
+            <div class="project-tree">
+                <div class="tree-project-node">
+                    <strong th:text="${'PROJECT: ' + selectedProject.title}">PROJECT X</strong>
+
+                    <div th:unless="${#maps.isEmpty(projectReport)}">
+                        <div class="tree-wp-node" th:each="entry : ${projectReport}">
+                            <p>
+                                <span class="node-title" th:text="${'WP' + entry.key.sequenceNumber + ': ' + entry.key.title}">WP1: WP1 Title</span>
+                                <span class="node-meta" th:text="${'(Start Month: M' + entry.key.startMonth + ', End Month: M' + entry.key.endMonth + ')'}">(Start, End)</span>
+                            </p>
+
+                            <ul class="tree-task-list">
+                                <li th:each="dto : ${entry.value}">
+                                    <span class="task-code" th:text="${'T' + entry.key.sequenceNumber + '.' + dto.task.sequenceNumber + ': '}">T1.1: </span>
+                                    <span class="task-title-text" th:text="${dto.task.title}">Task T1.1 Title</span>
+
+                                    <p class="task-desc-text" th:text="${dto.task.description}" th:if="${dto.task.description != null && !dto.task.description.isEmpty()}">Task description</p>
+
+                                    <div class="task-details">
+                                        <span th:text="${'Period: M' + dto.task.startMonth + ' - M' + dto.task.endMonth}">Period: M1 - M5</span> |
+                                        <span th:text="${'Total planned hours: ' + dto.totalPlannedHours}">Total planned hours: 0</span> |
+                                        <span th:text="${'Total worked hours: ' + dto.totalWorkedHours}">Total worked hours: 0</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <p class="no-data-msg italic-style margin-top-15" th:if="${#maps.isEmpty(projectReport)}">This project is currently empty. No WP or Tasks have been added yet.</p>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="tree-container placeholder-text" th:if="${selectedProject == null}">
+            <p>Select a project from the sidebar to view its detailed hierarchical structure.</p>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>
