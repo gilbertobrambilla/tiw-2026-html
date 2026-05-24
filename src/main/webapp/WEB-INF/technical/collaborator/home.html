@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Collaborator Home - Project Management</title>
+    <link rel="stylesheet" th:href="@{/global.css}">
+    <link rel="stylesheet" href="../../../global.css">
+</head>
+<body>
+
+<div class="navbar">
+    <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Collaborator</span>
+    <div class="nav-links">
+        <span class="active-nav">Home</span>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/logout}">Logout</a>
+    </div>
+</div>
+
+<div class="wrapper">
+    <div class="row layout-split">
+
+        <div class="sidebar-nav">
+            <h3>Your Projects</h3>
+            <ul class="collab-proj-list">
+                <li th:each="p : ${assignedProjects}">
+                    <a th:href="@{/collaborator/home(projectId=${p.id})}"
+                       class="proj-link"
+                       th:classappend="${selectedProject != null && selectedProject.id == p.id} ? 'active-proj' : ''"
+                       th:text="${p.title}">Project Title</a>
+
+                    <ul class="collab-wp-list" th:if="${selectedProject != null && selectedProject.id == p.id}">
+                        <th:block th:each="wp : ${assignedWps}">
+                            <li class="wp-title" th:text="${'WP' + wp.sequenceNumber + ' - ' + wp.title}">WP Title</li>
+
+                            <ul class="collab-task-list">
+                                <li th:each="t : ${assignedTasksMap.get(wp.id)}">
+                                    <a th:href="@{/collaborator/home(projectId=${p.id}, taskId=${t.id})}"
+                                       class="task-link"
+                                       th:classappend="${selectedTask != null && selectedTask.id == t.id} ? 'active-task' : ''"
+                                       th:text="${'T' + wp.sequenceNumber + '.' + t.sequenceNumber + ' ' + t.title}">Task Title</a>
+                                </li>
+                            </ul>
+                        </th:block>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="task-work-container" th:if="${selectedTask != null}">
+
+            <div class="task-header-info">
+                <h3 th:text="${'Task Timesheet: ' + selectedTask.title}">Task Title</h3>
+                <p><strong>Project:</strong> <span th:text="${selectedProject.title}"></span></p>
+                <p><strong>Active Period:</strong> Month <span th:text="${selectedTask.startMonth}"></span> to Month <span th:text="${selectedTask.endMonth}"></span></p>
+                <p><strong>Total Expected Hours:</strong> <span th:text="${totalExpectedHours}"></span></p>
+                <p><strong>Your Total Worked Hours:</strong> <span th:text="${totalWorkedHours}"></span></p>
+            </div>
+
+            <div class="form-container margin-top-20">
+                <h4>Log Work Hours</h4>
+
+                <form th:action="@{/collaborator/log-hours}" method="POST">
+                    <input type="hidden" name="taskId" th:value="${selectedTask.id}">
+                    <input type="hidden" name="projectId" th:value="${selectedProject.id}">
+
+                    <span class="error-msg-generic" th:if="${logGenericError != null}" th:text="${logGenericError}"></span>
+
+                    <div class="form-row-double">
+                        <div class="form-group">
+                            <label>Target Month:</label>
+                            <select name="month" required>
+                                <option value="">-- Select Month --</option>
+                                <option th:each="m : ${#numbers.sequence(selectedTask.startMonth, selectedTask.endMonth)}"
+                                        th:value="${m}"
+                                        th:text="${'Month ' + m}"
+                                        th:selected="${m == monthValue}">
+                                </option>
+                            </select>
+                            <span class="error-text" th:if="${monthError != null}" th:text="${monthError}"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Hours Logged:</label>
+                            <input type="number" name="workedHours" th:value="${workedHoursValue != null ? workedHoursValue : 0}" min="0" step="1" required>
+                            <span class="error-text" th:if="${workedHoursError != null}" th:text="${workedHoursError}"></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn">SAVE HOURS</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="task-work-container placeholder-text" th:if="${selectedTask == null}">
+            <p>Select a Project and then a Task from the sidebar to view details and log your work hours.</p>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

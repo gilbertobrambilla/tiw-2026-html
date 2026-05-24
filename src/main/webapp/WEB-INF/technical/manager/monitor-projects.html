@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitor Collaborators - Project Management</title>
+    <link rel="stylesheet" th:href="@{/global.css}">
+    <link rel="stylesheet" href="../../../global.css">
+</head>
+<body>
+
+<div class="navbar">
+    <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Manager</span>
+    <div class="nav-links">
+        <a th:href="@{/manager/home}">Home</a>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/manager/monitor-projects}">Monitor Projects</a>
+        <span class="nav-separator">|</span>
+        <span class="active-nav">Monitor Collaborators</span>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/logout}">Logout</a>
+    </div>
+</div>
+
+<div class="wrapper">
+    <div class="row">
+        <div class="form-container">
+            <h3>Select Collaborator</h3>
+            <form th:action="@{/manager/monitor-collaborators}" method="GET">
+                <div class="form-group">
+                    <label>Collaborator (assigned to your projects):</label>
+                    <select name="collaboratorId" required onchange="this.form.submit()">
+                        <option value="">-- Select a Collaborator --</option>
+                        <option th:each="c : ${teamCollaborators}"
+                                th:value="${c.id}"
+                                th:text="${c.firstName + ' ' + c.lastName}"
+                                th:selected="${selectedCollaborator != null && c.id == selectedCollaborator.id}">
+                        </option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row layout-full-width" th:if="${selectedCollaborator != null}">
+        <div class="table-container">
+            <h3 th:text="${'Hours Report: ' + selectedCollaborator.firstName + ' ' + selectedCollaborator.lastName}">Hours Report</h3>
+
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th colspan="2" rowspan="2">Project / WP / Task</th>
+                    <th th:each="m : ${#numbers.sequence(1, maxMonths)}" th:text="${'M' + m}">M1</th>
+                </tr>
+                <tr>
+                    <th th:each="m : ${#numbers.sequence(1, maxMonths)}" class="sub-th worked-th">Logged</th>
+                </tr>
+                </thead>
+                <tbody>
+                <th:block th:each="projEntry : ${collaboratorDataMap}">
+                    <tr class="row-project">
+                        <td th:colspan="${2 + maxMonths}" th:text="${'PROJECT: ' + projEntry.key.title}">Project X</td>
+                    </tr>
+
+                    <th:block th:each="wpEntry : ${projEntry.value}">
+                        <tr class="row-wp-sub">
+                            <td th:colspan="${2 + maxMonths}" th:text="${'WP' + wpEntry.key.sequenceNumber + ' - ' + wpEntry.key.title}">WP1</td>
+                        </tr>
+
+                        <tr class="row-task" th:each="taskData : ${wpEntry.value}">
+                            <td class="empty-cell"></td>
+                            <td class="task-name" th:text="${'T' + wpEntry.key.sequenceNumber + '.' + taskData.task.sequenceNumber}">T1.1</td>
+
+                            <th:block th:each="m : ${#numbers.sequence(1, maxMonths)}">
+                                <td class="worked-cell" th:text="${taskData.workedHoursByMonth.get(m) != null ? taskData.workedHoursByMonth.get(m) : '-'}">0</td>
+                            </th:block>
+                        </tr>
+                    </th:block>
+                </th:block>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

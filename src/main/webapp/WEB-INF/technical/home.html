@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Role - Project Management</title>
+    <link rel="stylesheet" th:href="@{/global.css}">
+    <link rel="stylesheet" href="../../global.css">
+</head>
+<body>
+
+<div class="navbar">
+    <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, User</span>
+    <div class="nav-links">
+        <span class="active-nav">Select Role</span>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/logout}">Logout</a>
+    </div>
+</div>
+
+<div class="wrapper login-wrapper">
+    <div class="row">
+        <div class="welcome-options">
+
+            <h3 th:text="${'Welcome, ' + session.user.firstName + '!'}">Welcome!</h3>
+            <p class="welcome-msg">Please select the role you wish to use for this session:</p>
+
+            <div class="form-group">
+                <a th:href="@{/technical/manager/home}" class="btn btn-link">
+                    Access as Project Manager
+                </a>
+
+                <a th:href="@{/technical/collaborator/home}" class="btn btn-secondary btn-link">
+                    Access as Collaborator
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -119,4 +119,53 @@ public class ProjectDAO {
         }
         return false;
     }
+
+    public List<Project> getProjectsByWorker(int workerId) throws SQLException {
+        List<Project> projects = new ArrayList<>();
+        String query = "SELECT DISTINCT p.* FROM projects p JOIN wp w ON p.id = w.project_id JOIN tasks t ON w.id = t.wp_id JOIN task_workers tw ON t.id = tw.task_id WHERE tw.user_id = ? ORDER BY p.id DESC";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, workerId);
+
+            // assigned projects are fetched avoiding duplicates via distinct keyword
+            try (ResultSet result = stmt.executeQuery()) {
+                while (result.next()) {
+                    Project project = new Project(
+                            result.getInt("id"),
+                            result.getString("title"),
+                            result.getInt("duration_months"),
+                            ProjectStatus.valueOf(result.getString("status")),
+                            null,
+                            null
+                    );
+                    projects.add(project);
+                }
+            }
+        }
+        return projects;
+    }
+
+    public Project getProjectByIdAndWorker(int projectId, int workerId) throws SQLException {
+        String query = "SELECT DISTINCT p.* FROM projects p JOIN wp w ON p.id = w.project_id JOIN tasks t ON w.id = t.wp_id JOIN task_workers tw ON t.id = tw.task_id WHERE p.id = ? AND tw.user_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, projectId);
+            stmt.setInt(2, workerId);
+
+            // worker assignment to the specific project is verified
+            try (ResultSet result = stmt.executeQuery()) {
+                if (result.next()) {
+                    return new Project(
+                            result.getInt("id"),
+                            result.getString("title"),
+                            result.getInt("duration_months"),
+                            ProjectStatus.valueOf(result.getString("status")),
+                            null,
+                            null
+                    );
+                }
+            }
+        }
+        return null;
+    }
 }

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Home - Project Management</title>
+    <link rel="stylesheet" th:href="@{/global.css}">
+    <link rel="stylesheet" href="../../../global.css">
+</head>
+<body>
+
+<div class="navbar">
+    <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Manager</span>
+    <div class="nav-links">
+        <span class="active-nav">Home</span>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/manager/monitor-projects}">Monitor Projects</a>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/manager/monitor-collaborators}">Monitor Collaborators</a>
+        <span class="nav-separator">|</span>
+        <a th:href="@{/logout}">Logout</a>
+    </div>
+</div>
+
+<div class="wrapper">
+
+    <div class="row">
+        <div class="form-container">
+            <h3>Select Task to Manage</h3>
+            <form th:action="@{/manager/home}" method="GET">
+                <div class="form-group">
+                    <label>Select Operational Task:</label>
+                    <select name="taskId" required onchange="this.form.submit()">
+                        <option value="">-- Select a Task --</option>
+
+                        <th:block th:each="projEntry : ${managerProjectsMap}">
+                            <option disabled th:text="${'--- PROJECT: ' + projEntry.key.title + ' ---'}"></option>
+
+                            <th:block th:each="wpEntry : ${projEntry.value}">
+                                <option disabled th:text="${'   └─ WP' + wpEntry.key.sequenceNumber + ': ' + wpEntry.key.title}"></option>
+
+                                <option th:each="t : ${wpEntry.value}"
+                                        th:value="${t.id}"
+                                        th:text="${'      T' + wpEntry.key.sequenceNumber + '.' + t.sequenceNumber + ' - ' + t.title}"
+                                        th:selected="${t.id == selectedTaskId}">
+                                </option>
+                            </th:block>
+                        </th:block>
+                    </select>
+                </div>
+                <button type="submit" class="btn">LOAD TASK CONFIGURATION</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row" th:if="${selectedTask != null}">
+        <div class="form-container">
+            <h3 th:text="${'Project Assignment - Task: ' + selectedTask.title}">Task Management</h3>
+            <p class="task-info-summary" th:text="${'Task Active Phase: Month ' + selectedTask.startMonth + ' to Month ' + selectedTask.endMonth}"></p>
+
+            <form th:action="@{/manager/save-assignment}" method="POST">
+                <input type="hidden" name="taskId" th:value="${selectedTask.id}">
+
+                <span class="error-msg-generic" th:if="${projectGenericError != null}" th:text="${projectGenericError}"></span>
+
+                <h4>Planned Hours per Month</h4>
+                <div class="months-grid">
+                    <div class="form-group month-input-group" th:each="m : ${#numbers.sequence(selectedTask.startMonth, selectedTask.endMonth)}">
+                        <label th:text="${'Month M' + m + ':'}">Month M1:</label>
+                        <input type="number"
+                               th:name="${'hours_' + m}"
+                               th:value="${hoursValues != null ? hoursValues.get(m) : (existingHours != null ? existingHours.get(m) : 0)}"
+                               min="0" required>
+                        <span class="error-text" th:if="${hoursErrors != null && hoursErrors.get(m) != null}" th:text="${hoursErrors.get(m)}"></span>
+                    </div>
+                </div>
+
+                <div class="form-group margin-top-20">
+                    <label>Assign Technical Collaborators (Multiple Selection):</label>
+                    <div class="checkbox-list">
+                        <div class="checkbox-item" th:each="collab : ${availableCollaborators}">
+                            <input type="checkbox" name="collaboratorIds"
+                                   th:value="${collab.id}"
+                                   th:id="${'collab_' + collab.id}"
+                                   th:checked="${selectedCollaboratorIdsValue != null ? #lists.contains(selectedCollaboratorIdsValue, collab.id) : (existingCollaboratorIds != null && #lists.contains(existingCollaboratorIds, collab.id))}">
+                            <label th:for="${'collab_' + collab.id}" th:text="${collab.firstName + ' ' + collab.lastName}"></label>
+                        </div>
+                    </div>
+                    <span class="error-text" th:if="${collaboratorsError != null}" th:text="${collaboratorsError}"></span>
+                </div>
+
+                <div class="form-row-double margin-top-20">
+                    <button type="submit" name="action" value="save" class="btn">SAVE</button>
+                    <button type="submit" name="action" value="assign" class="btn btn-secondary">ASSIGN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

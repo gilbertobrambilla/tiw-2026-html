@@ -150,4 +150,30 @@ public class WPDAO {
         }
         return groupedWPs;
     }
+
+    public List<WP> getWPsByProjectAndWorker(int projectId, int workerId) throws SQLException {
+        List<WP> wpList = new ArrayList<>();
+        String query = "SELECT DISTINCT w.* FROM wp w JOIN tasks t ON w.id = t.wp_id JOIN task_workers tw ON t.id = tw.task_id WHERE w.project_id = ? AND tw.user_id = ? ORDER BY w.sequence_number ASC";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, projectId);
+            stmt.setInt(2, workerId);
+
+            // wps containing tasks assigned to the worker are extracted
+            try (ResultSet result = stmt.executeQuery()) {
+                while (result.next()) {
+                    WP wp = new WP(
+                            result.getInt("id"),
+                            result.getInt("project_id"),
+                            result.getInt("sequence_number"),
+                            result.getString("title"),
+                            result.getInt("start_month"),
+                            result.getInt("end_month")
+                    );
+                    wpList.add(wp);
+                }
+            }
+        }
+        return wpList;
+    }
 }

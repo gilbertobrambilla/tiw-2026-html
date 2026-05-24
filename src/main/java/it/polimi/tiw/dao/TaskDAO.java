@@ -106,4 +106,56 @@ public class TaskDAO {
         }
         return taskList;
     }
+
+    public List<Task> getTasksByWpAndWorker(int wpId, int workerId) throws SQLException {
+        List<Task> taskList = new ArrayList<>();
+        String query = "SELECT t.* FROM tasks t JOIN task_workers tw ON t.id = tw.task_id WHERE t.wp_id = ? AND tw.user_id = ? ORDER BY t.sequence_number ASC";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, wpId);
+            stmt.setInt(2, workerId);
+
+            // tasks specifically assigned to the worker are retrieved
+            try (ResultSet result = stmt.executeQuery()) {
+                while (result.next()) {
+                    Task task = new Task(
+                            result.getInt("id"),
+                            result.getInt("wp_id"),
+                            result.getInt("sequence_number"),
+                            result.getString("title"),
+                            result.getString("description"),
+                            result.getInt("start_month"),
+                            result.getInt("end_month")
+                    );
+                    taskList.add(task);
+                }
+            }
+        }
+        return taskList;
+    }
+
+    public Task getTaskByIdAndWorker(int taskId, int workerId) throws SQLException {
+        String query = "SELECT t.* FROM tasks t JOIN task_workers tw ON t.id = tw.task_id WHERE t.id = ? AND tw.user_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.setInt(2, workerId);
+
+            // worker assignment to the specific task is strictly validated
+            try (ResultSet result = stmt.executeQuery()) {
+                if (result.next()) {
+                    return new Task(
+                            result.getInt("id"),
+                            result.getInt("wp_id"),
+                            result.getInt("sequence_number"),
+                            result.getString("title"),
+                            result.getString("description"),
+                            result.getInt("start_month"),
+                            result.getInt("end_month")
+                    );
+                }
+            }
+        }
+        return null;
+    }
 }
