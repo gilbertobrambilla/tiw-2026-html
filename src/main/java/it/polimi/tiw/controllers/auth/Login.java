@@ -1,6 +1,9 @@
 package it.polimi.tiw.controllers.auth;
 
+import it.polimi.tiw.beans.UserLogin;
 import it.polimi.tiw.beans.UserRole;
+import it.polimi.tiw.dao.UserDAO;
+import it.polimi.tiw.utils.DatabaseConnection;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -8,21 +11,18 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import it.polimi.tiw.beans.UserLogin;
-import it.polimi.tiw.dao.UserDAO;
-import it.polimi.tiw.utils.DatabaseConnection;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
 import org.thymeleaf.web.IWebExchange;
 import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 
-/**
- * Authentication controller handling login page rendering and macro role verification.
- */
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
 @WebServlet("/login")
 public class Login extends HttpServlet {
     private TemplateEngine templateEngine;
@@ -65,31 +65,44 @@ public class Login extends HttpServlet {
         IWebExchange webExchange = application.buildExchange(request, response);
         WebContext webContext = new WebContext(webExchange, webExchange.getLocale());
 
-        // validation of input parameters
-        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            webContext.setVariable("error", "Missing credentials");
-            response.setContentType("text/html;charset=UTF-8");
-            templateEngine.process(TEMPLATE_PATH, webContext, response.getWriter());
-            return;
+        List<String> formErrors = new ArrayList<>();
+
+        // validation of input parameters is performed
+        if (username == null || username.trim().isEmpty()) {
+            formErrors.add("Username cannot be empty");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            formErrors.add("Password cannot be empty");
         }
 
-        UserLogin user = null;
-
-        // processing login logic through safe database connection lookup
-        try (Connection connection = DatabaseConnection.getInstance(context).getConnection()) {
-            UserDAO userDAO = new UserDAO(connection);
-            user = userDAO.getUserByCredentials(username, password);
-        } catch (SQLException e) {
-            webContext.setVariable("error", "Database connection failure");
+        // template is processed if validation errors are detected
+        if (!formErrors.isEmpty()) {
+            webContext.setVariable("formErrors", formErrors);
             webContext.setVariable("usernameValue", username);
             response.setContentType("text/html;charset=UTF-8");
             templateEngine.process(TEMPLATE_PATH, webContext, response.getWriter());
             return;
         }
 
-        // session establishment and conditional macro role redirection
+        UserLogin user;
+
+        // database connection and user lookup are executed
+        try (Connection connection = DatabaseConnection.getInstance(context).getConnection()) {
+            UserDAO userDAO = new UserDAO(connection);
+            user = userDAO.getUserByCredentials(username, password);
+        } catch (SQLException e) {
+            formErrors.add("Database connection failure");
+            webContext.setVariable("formErrors", formErrors);
+            webContext.setVariable("usernameValue", username);
+            response.setContentType("text/html;charset=UTF-8");
+            templateEngine.process(TEMPLATE_PATH, webContext, response.getWriter());
+            return;
+        }
+
+        // session establishment and macro role redirection are executed
         if (user == null) {
-            webContext.setVariable("error", "Invalid credentials");
+            formErrors.add("Invalid credentials");
+            webContext.setVariable("formErrors", formErrors);
             webContext.setVariable("usernameValue", username);
             response.setContentType("text/html;charset=UTF-8");
             templateEngine.process(TEMPLATE_PATH, webContext, response.getWriter());

@@ -25,9 +25,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Controller used for the administrator project verification page rendering.
- */
 @WebServlet("/admin/verify-projects")
 public class VerifyProjects extends HttpServlet {
     private TemplateEngine templateEngine;
@@ -51,59 +48,58 @@ public class VerifyProjects extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // thymeleaf web application context initialization
         JakartaServletWebApplication webApplication = JakartaServletWebApplication.buildApplication(getServletContext());
         WebContext ctx = new WebContext(webApplication.buildExchange(request, response), request.getLocale());
 
-        // session and current user are retrieved
         HttpSession session = request.getSession();
         UserLogin admin = (UserLogin) session.getAttribute("user");
 
-        // database connection is established
+        // database data fetch is executed
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
             ProjectDAO projectDAO = new ProjectDAO(connection);
             ProjectReportDAO projectReportDAO = new ProjectReportDAO(connection);
 
-            // all projects created by the admin are fetched for the sidebar
             List<Project> projects = projectDAO.getProjectsByCreator(admin.getId());
             ctx.setVariable("projects", projects);
 
-            // selected project identifier is extracted from the request
             String projectIdParam = request.getParameter("projectId");
 
             if (projectIdParam != null && !projectIdParam.isEmpty()) {
-                int projectId = Integer.parseInt(projectIdParam);
+                int projectId;
 
-                // project ownership is verified
+                try {
+                    projectId = Integer.parseInt(projectIdParam);
+                } catch (NumberFormatException e) {
+                    ctx.setVariable("verifyProjectsGlobalError", "invalid project parameter");
+                    response.setContentType("text/html;charset=UTF-8");
+                    templateEngine.process(TEMPLATE_PATH, ctx, response.getWriter());
+                    return;
+                }
+
                 Project selectedProject = projectDAO.getProjectByIdAndCreator(projectId, admin.getId());
 
                 if (selectedProject != null) {
-                    // project details and aggregated report are injected into the context
                     ctx.setVariable("selectedProject", selectedProject);
 
-                    Map<WP, List<TaskWithHours>> projectReport = projectReportDAO.getProjectReport(projectId);
+                    Map<WP, List<TaskWithHours>> projectReport = projectReportDAO.getProjectReportByProjectAndCreator(projectId, admin.getId());
                     ctx.setVariable("projectReport", projectReport);
+                } else {
+                    ctx.setVariable("verifyProjectsGlobalError", "Project not found or authorization denied");
                 }
             }
 
         } catch (SQLException e) {
-            // database error is handled
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database connection failure");
-            return;
-        } catch (NumberFormatException e) {
-            // invalid parameter format is handled
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid project parameter format");
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
             return;
         }
 
-        // template processing and response generation
+        // template processing is executed
         response.setContentType("text/html;charset=UTF-8");
         templateEngine.process(TEMPLATE_PATH, ctx, response.getWriter());
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // requests are routed to the get handler to support forwarded requests
         doGet(request, response);
     }
 }
