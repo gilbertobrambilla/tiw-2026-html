@@ -12,24 +12,30 @@
     <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Manager</span>
     <div class="nav-links">
         <span class="active-nav">Home</span>
-        <span class="nav-separator">|</span>
-        <a th:href="@{/manager/monitor-projects}">Monitor Projects</a>
-        <span class="nav-separator">|</span>
-        <a th:href="@{/manager/monitor-collaborators}">Monitor Collaborators</a>
-        <span class="nav-separator">|</span>
+        <a th:href="@{/technical/manager/monitor-projects}">Monitor Projects</a>
+        <a th:href="@{/technical/manager/monitor-collaborators}">Monitor Collaborators</a>
         <a th:href="@{/logout}">Logout</a>
     </div>
 </div>
 
 <div class="wrapper">
 
+    <div class="error-msg-generic" th:if="${managerHomeGlobalError != null}" th:text="${managerHomeGlobalError}">
+        Operation not allowed
+    </div>
+
     <div class="row">
         <div class="form-container">
             <h3>Select Task to Manage</h3>
-            <form th:action="@{/manager/home}" method="GET">
+
+            <div th:if="${#maps.isEmpty(managerProjectsMap)}" class="empty-state-msg">
+                <p>No tasks are available for your managed projects yet.</p>
+            </div>
+
+            <form th:if="${!#maps.isEmpty(managerProjectsMap)}" th:action="@{/technical/manager/home}" method="GET">
                 <div class="form-group">
-                    <label>Select Operational Task:</label>
-                    <select name="taskId" required onchange="this.form.submit()">
+                    <label>Select Task:</label>
+                    <select name="taskId" required>
                         <option value="">-- Select a Task --</option>
 
                         <th:block th:each="projEntry : ${managerProjectsMap}">
@@ -57,10 +63,8 @@
             <h3 th:text="${'Project Assignment - Task: ' + selectedTask.title}">Task Management</h3>
             <p class="task-info-summary" th:text="${'Task Active Phase: Month ' + selectedTask.startMonth + ' to Month ' + selectedTask.endMonth}"></p>
 
-            <form th:action="@{/manager/save-assignment}" method="POST">
+            <form th:action="@{/technical/manager/save-assignment}" method="POST">
                 <input type="hidden" name="taskId" th:value="${selectedTask.id}">
-
-                <span class="error-msg-generic" th:if="${projectGenericError != null}" th:text="${projectGenericError}"></span>
 
                 <h4>Planned Hours per Month</h4>
                 <div class="months-grid">
@@ -70,7 +74,6 @@
                                th:name="${'hours_' + m}"
                                th:value="${hoursValues != null ? hoursValues.get(m) : (existingHours != null ? existingHours.get(m) : 0)}"
                                min="0" required>
-                        <span class="error-text" th:if="${hoursErrors != null && hoursErrors.get(m) != null}" th:text="${hoursErrors.get(m)}"></span>
                     </div>
                 </div>
 
@@ -85,12 +88,15 @@
                             <label th:for="${'collab_' + collab.id}" th:text="${collab.firstName + ' ' + collab.lastName}"></label>
                         </div>
                     </div>
-                    <span class="error-text" th:if="${collaboratorsError != null}" th:text="${collaboratorsError}"></span>
                 </div>
 
                 <div class="form-row-double margin-top-20">
                     <button type="submit" name="action" value="save" class="btn">SAVE</button>
                     <button type="submit" name="action" value="assign" class="btn btn-secondary">ASSIGN</button>
+                </div>
+
+                <div class="error-msg-generic" th:if="${formErrors != null}">
+                    <div th:each="err : ${formErrors}" th:text="${err}"></div>
                 </div>
             </form>
         </div>

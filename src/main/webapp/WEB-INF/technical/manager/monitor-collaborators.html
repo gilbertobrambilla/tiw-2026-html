@@ -10,10 +10,10 @@
 
 <div class="navbar">
     <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Manager</span>
-    <div>
-        <a th:href="@{/manager/home}">Home</a> |
-        <a th:href="@{/manager/monitor-projects}">Monitor Projects</a> |
-        <span>Monitor Collaborators</span> |
+    <div class="nav-links">
+        <a th:href="@{/technical/manager/home}">Home</a>
+        <a th:href="@{/technical/manager/monitor-projects}">Monitor Projects</a>
+        <span class="active-nav">Monitor Collaborators</span>
         <a th:href="@{/logout}">Logout</a>
     </div>
 </div>
@@ -21,12 +21,17 @@
 <div class="wrapper">
     <div class="row">
         <div class="form-container">
-            <h3>Seleziona Collaboratore</h3>
-            <form th:action="@{/manager/monitor-collaborators}" method="GET">
+            <h3>Select Collaborator</h3>
+
+            <div th:if="${#lists.isEmpty(teamCollaborators)}" class="empty-state-msg">
+                <p>No collaborators are currently assigned to any of your managed projects.</p>
+            </div>
+
+            <form th:if="${!#lists.isEmpty(teamCollaborators)}" th:action="@{/technical/manager/monitor-collaborators}" method="GET">
                 <div class="form-group">
-                    <label>Collaboratore (tra quelli assegnati ai tuoi progetti):</label>
-                    <select name="collaboratorId" required onchange="this.form.submit()">
-                        <option value="">-- Seleziona Collaboratore --</option>
+                    <label>Collaborator (assigned to your projects):</label>
+                    <select name="collaboratorId" required>
+                        <option value="">-- Select a Collaborator --</option>
                         <option th:each="c : ${teamCollaborators}"
                                 th:value="${c.id}"
                                 th:text="${c.firstName + ' ' + c.lastName}"
@@ -34,28 +39,33 @@
                         </option>
                     </select>
                 </div>
+                <button type="submit" class="btn">LOAD COLLABORATOR REPORT</button>
             </form>
         </div>
     </div>
 
     <div class="row layout-full-width" th:if="${selectedCollaborator != null}">
         <div class="table-container">
-            <h3 th:text="${'Rendiconto Ore: ' + selectedCollaborator.firstName + ' ' + selectedCollaborator.lastName}">Rendiconto</h3>
+            <h3 th:text="${'Hours Report: ' + selectedCollaborator.firstName + ' ' + selectedCollaborator.lastName}">Hours Report</h3>
 
-            <table class="data-table">
+            <div th:if="${#maps.isEmpty(collaboratorDataMap)}" class="empty-state-msg">
+                <p>This collaborator has not logged any hours or is not mapped to any active tasks yet.</p>
+            </div>
+
+            <table th:if="${!#maps.isEmpty(collaboratorDataMap)}" class="data-table">
                 <thead>
                 <tr>
-                    <th colspan="2" rowspan="2">Progetto / WP / Task</th>
+                    <th colspan="2" rowspan="2">Project / WP / Task</th>
                     <th th:each="m : ${#numbers.sequence(1, maxMonths)}" th:text="${'M' + m}">M1</th>
                 </tr>
                 <tr>
-                    <th th:each="m : ${#numbers.sequence(1, maxMonths)}" class="sub-th worked-th">Lavorate</th>
+                    <th th:each="m : ${#numbers.sequence(1, maxMonths)}" class="sub-th worked-th">Logged</th>
                 </tr>
                 </thead>
                 <tbody>
                 <th:block th:each="projEntry : ${collaboratorDataMap}">
                     <tr class="row-project">
-                        <td th:colspan="${2 + maxMonths}" th:text="${'PROGETTO: ' + projEntry.key.title}">Progetto X</td>
+                        <td th:colspan="${2 + maxMonths}" th:text="${'PROJECT: ' + projEntry.key.title}">Project X</td>
                     </tr>
 
                     <th:block th:each="wpEntry : ${projEntry.value}">

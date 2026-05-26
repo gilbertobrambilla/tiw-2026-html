@@ -29,7 +29,9 @@
 
                 <button type="submit" class="btn">LOGIN</button>
 
-                <span class="error-msg-generic" th:if="${loginError != null}" th:text="${loginError}"></span>
+                <div class="error-msg-generic" th:if="${formErrors != null}">
+                    <div th:each="err : ${formErrors}" th:text="${err}"></div>
+                </div>
             </form>
         </div>
     </div>

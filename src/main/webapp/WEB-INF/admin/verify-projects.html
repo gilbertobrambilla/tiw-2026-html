@@ -17,6 +17,10 @@
 </div>
 
 <div class="wrapper">
+    <div class="error-msg-generic" th:if="${verifyProjectsGlobalError != null}" th:text="${verifyProjectsGlobalError}">
+        Project not found or authorization denied
+    </div>
+
     <div class="row layout-split">
 
         <div class="sidebar-list">
@@ -72,8 +76,7 @@
                     </div>
 
                     <div class="empty-state-msg" th:if="${#maps.isEmpty(projectReport)}">
-                        <p>This project is currently empty. No WP has been added.</p>
-                        <a th:href="@{/admin/home}">Return to Home to add a WP</a>
+                        <p>This project is empty.</p>
                     </div>
 
                 </div>
@@ -81,7 +84,7 @@
         </div>
 
         <div class="tree-container" th:if="${selectedProject == null}">
-            <div class="empty-state-msg" style="margin-top: 0;">
+            <div class="empty-state-msg">
                 <p>Select a project from the sidebar to view its structure.</p>
             </div>
         </div>

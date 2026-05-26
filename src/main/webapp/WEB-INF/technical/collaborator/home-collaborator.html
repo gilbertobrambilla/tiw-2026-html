@@ -12,30 +12,48 @@
     <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Collaborator</span>
     <div class="nav-links">
         <span class="active-nav">Home</span>
-        <span class="nav-separator">|</span>
         <a th:href="@{/logout}">Logout</a>
     </div>
 </div>
 
 <div class="wrapper">
-    <div class="row layout-split">
 
+    <div class="error-msg-generic" th:if="${homeCollaboratorGlobalError != null}" th:text="${homeCollaboratorGlobalError}">
+        Operation not allowed
+    </div>
+
+    <div class="row layout-split">
         <div class="sidebar-nav">
             <h3>Your Projects</h3>
-            <ul class="collab-proj-list">
+
+            <p th:if="${#lists.isEmpty(assignedProjects)}" style="font-style: italic; font-size: 0.9em; color: gray;">
+                No assigned projects found.
+            </p>
+
+            <ul class="collab-proj-list" th:if="${!#lists.isEmpty(assignedProjects)}">
                 <li th:each="p : ${assignedProjects}">
-                    <a th:href="@{/collaborator/home(projectId=${p.id})}"
+                    <a th:href="@{/technical/collaborator/home(projectId=${p.id})}"
                        class="proj-link"
                        th:classappend="${selectedProject != null && selectedProject.id == p.id} ? 'active-proj' : ''"
                        th:text="${p.title}">Project Title</a>
 
                     <ul class="collab-wp-list" th:if="${selectedProject != null && selectedProject.id == p.id}">
+
+                        <li th:if="${#lists.isEmpty(assignedWps)}" style="font-style: italic; font-size: 0.85em; color: gray; margin-left: 10px;">
+                            No WP found.
+                        </li>
+
                         <th:block th:each="wp : ${assignedWps}">
                             <li class="wp-title" th:text="${'WP' + wp.sequenceNumber + ' - ' + wp.title}">WP Title</li>
 
                             <ul class="collab-task-list">
+
+                                <li th:if="${#lists.isEmpty(assignedTasksMap.get(wp.id))}" style="font-style: italic; font-size: 0.8em; color: gray;">
+                                    No tasks assigned.
+                                </li>
+
                                 <li th:each="t : ${assignedTasksMap.get(wp.id)}">
-                                    <a th:href="@{/collaborator/home(projectId=${p.id}, taskId=${t.id})}"
+                                    <a th:href="@{/technical/collaborator/home(projectId=${p.id}, taskId=${t.id})}"
                                        class="task-link"
                                        th:classappend="${selectedTask != null && selectedTask.id == t.id} ? 'active-task' : ''"
                                        th:text="${'T' + wp.sequenceNumber + '.' + t.sequenceNumber + ' ' + t.title}">Task Title</a>
@@ -52,6 +70,7 @@
             <div class="task-header-info">
                 <h3 th:text="${'Task Timesheet: ' + selectedTask.title}">Task Title</h3>
                 <p><strong>Project:</strong> <span th:text="${selectedProject.title}"></span></p>
+                <p><strong>Description:</strong> <span th:text="${selectedTask.description}"></span></p>
                 <p><strong>Active Period:</strong> Month <span th:text="${selectedTask.startMonth}"></span> to Month <span th:text="${selectedTask.endMonth}"></span></p>
                 <p><strong>Total Expected Hours:</strong> <span th:text="${totalExpectedHours}"></span></p>
                 <p><strong>Your Total Worked Hours:</strong> <span th:text="${totalWorkedHours}"></span></p>
@@ -60,11 +79,9 @@
             <div class="form-container margin-top-20">
                 <h4>Log Work Hours</h4>
 
-                <form th:action="@{/collaborator/log-hours}" method="POST">
+                <form th:action="@{/technical/collaborator/log-hours}" method="POST">
                     <input type="hidden" name="taskId" th:value="${selectedTask.id}">
                     <input type="hidden" name="projectId" th:value="${selectedProject.id}">
-
-                    <span class="error-msg-generic" th:if="${logGenericError != null}" th:text="${logGenericError}"></span>
 
                     <div class="form-row-double">
                         <div class="form-group">
@@ -77,17 +94,19 @@
                                         th:selected="${m == monthValue}">
                                 </option>
                             </select>
-                            <span class="error-text" th:if="${monthError != null}" th:text="${monthError}"></span>
                         </div>
 
                         <div class="form-group">
                             <label>Hours Logged:</label>
                             <input type="number" name="workedHours" th:value="${workedHoursValue != null ? workedHoursValue : 0}" min="0" step="1" required>
-                            <span class="error-text" th:if="${workedHoursError != null}" th:text="${workedHoursError}"></span>
                         </div>
                     </div>
 
                     <button type="submit" class="btn">SAVE HOURS</button>
+
+                    <div class="error-msg-generic" th:if="${formErrors != null}">
+                        <div th:each="err : ${formErrors}" th:text="${err}"></div>
+                    </div>
                 </form>
             </div>
         </div>

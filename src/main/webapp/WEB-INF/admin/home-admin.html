@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Administrator Home - Project Management</title>
     <link rel="stylesheet" th:href="@{/global.css}">
+    <link rel="stylesheet" href="../../global.css">
 </head>
 <body>
 
@@ -29,13 +30,11 @@
                 <div class="form-group">
                     <label>Project Title:</label>
                     <input type="text" name="title" th:value="${projectTitleValue}" required maxlength="100">
-                    <span class="error-text" th:if="${projectTitleError != null}" th:text="${projectTitleError}"></span>
                 </div>
 
                 <div class="form-group">
                     <label>Duration (in months):</label>
                     <input type="number" name="duration" th:value="${projectDurationValue}" min="1" required>
-                    <span class="error-text" th:if="${projectDurationError != null}" th:text="${projectDurationError}"></span>
                 </div>
 
                 <div class="form-group">
@@ -55,12 +54,13 @@
                                 th:selected="${u.id == projectManagedByValue}">
                         </option>
                     </select>
-                    <span class="error-text" th:if="${projectManagedByError != null}" th:text="${projectManagedByError}"></span>
                 </div>
 
                 <button type="submit" class="btn">SAVE PROJECT</button>
 
-                <span class="error-msg-generic" th:if="${projectGenericError != null}" th:text="${projectGenericError}"></span>
+                <div class="error-msg-generic" th:if="${projectFormErrors != null}">
+                    <div th:each="err : ${projectFormErrors}" th:text="${err}"></div>
+                </div>
             </form>
         </div>
     </div>
@@ -84,31 +84,29 @@
                                 th:selected="${p.id == wpProjectIdValue}">
                         </option>
                     </select>
-                    <span class="error-text" th:if="${wpProjectError != null}" th:text="${wpProjectError}"></span>
                 </div>
 
                 <div class="form-group">
                     <label>WP Title:</label>
                     <input type="text" name="title" th:value="${wpTitleValue}" required maxlength="100">
-                    <span class="error-text" th:if="${wpTitleError != null}" th:text="${wpTitleError}"></span>
                 </div>
 
                 <div class="form-row-double">
                     <div class="form-group">
                         <label>Start Month:</label>
                         <input type="number" name="startMonth" th:value="${wpStartMonthValue}" min="1" required>
-                        <span class="error-text" th:if="${wpStartMonthError != null}" th:text="${wpStartMonthError}"></span>
                     </div>
                     <div class="form-group">
                         <label>End Month:</label>
                         <input type="number" name="endMonth" th:value="${wpEndMonthValue}" min="1" required>
-                        <span class="error-text" th:if="${wpEndMonthError != null}" th:text="${wpEndMonthError}"></span>
                     </div>
                 </div>
 
                 <button type="submit" class="btn">SAVE WP</button>
 
-                <span class="error-msg-generic" th:if="${wpGenericError != null}" th:text="${wpGenericError}"></span>
+                <div class="error-msg-generic" th:if="${wpFormErrors != null}">
+                    <div th:each="err : ${wpFormErrors}" th:text="${err}"></div>
+                </div>
             </form>
         </div>
     </div>
@@ -135,37 +133,34 @@
                             </option>
                         </th:block>
                     </select>
-                    <span class="error-text" th:if="${taskWpError != null}" th:text="${taskWpError}"></span>
                 </div>
 
                 <div class="form-group">
                     <label>Task Title:</label>
                     <input type="text" name="title" th:value="${taskTitleValue}" required maxlength="100">
-                    <span class="error-text" th:if="${taskTitleError != null}" th:text="${taskTitleError}"></span>
                 </div>
 
                 <div class="form-group">
                     <label>Description:</label>
                     <textarea name="description" th:text="${taskDescriptionValue}" required rows="3"></textarea>
-                    <span class="error-text" th:if="${taskDescriptionError != null}" th:text="${taskDescriptionError}"></span>
                 </div>
 
                 <div class="form-row-double">
                     <div class="form-group">
                         <label>Start Month:</label>
                         <input type="number" name="startMonth" th:value="${taskStartMonthValue}" min="1" required>
-                        <span class="error-text" th:if="${taskStartMonthError != null}" th:text="${taskStartMonthError}"></span>
                     </div>
                     <div class="form-group">
                         <label>End Month:</label>
                         <input type="number" name="endMonth" th:value="${taskEndMonthValue}" min="1" required>
-                        <span class="error-text" th:if="${taskEndMonthError != null}" th:text="${taskEndMonthError}"></span>
                     </div>
                 </div>
 
                 <button type="submit" class="btn">SAVE TASK</button>
 
-                <span class="error-msg-generic" th:if="${taskGenericError != null}" th:text="${taskGenericError}"></span>
+                <div class="error-msg-generic" th:if="${taskFormErrors != null}">
+                    <div th:each="err : ${taskFormErrors}" th:text="${err}"></div>
+                </div>
             </form>
         </div>
     </div>

@@ -62,31 +62,21 @@ h2, h3 {
     transition: opacity 0.2s;
 }
 
-/* navigation links hover appearance */
 .navbar a:hover {
     opacity: 1;
 }
 
-/* wrapper for the navigation menu elements */
 .navbar .nav-links {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-/* visual separator styling */
-.navbar .nav-separator {
-    color: rgba(255, 255, 255, 0.4);
-    font-weight: normal;
-    user-select: none;
-}
-
-/* active navigation item highlights with bold text and bottom border */
 .navbar .active-nav {
-    color: white;
+    color: yellow;
     font-weight: bold;
-    border-bottom: 2px solid white;
-    padding-bottom: 2px;
+    /*border-bottom: 2px solid white;*/
+    /*padding-bottom: 2px;*/
 }
 
 .wrapper {
@@ -149,7 +139,7 @@ input:focus, select:focus, textarea:focus {
 
 .form-row-double .form-group {
     flex: 1;
-    margin-bottom: 0;
+    /*margin-bottom: 0;*/
 }
 
 .btn {
@@ -195,12 +185,24 @@ input:focus, select:focus, textarea:focus {
     display: block;
 }
 
+.error-msg-generic div {
+    margin-bottom: 5px;
+}
+
+.error-msg-generic div:last-child {
+    margin-bottom: 0;
+}
+
 /* --- 5. LOGIN & WELCOME PAGES --- */
 .login-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 80vh;
+}
+
+.login-form {
+    width: 350px;
 }
 
 .welcome-options {
@@ -366,7 +368,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* =========================================
-   7. MANAGER SECTION - HOME RESPONSABILE
+   7. MANAGER SECTION
    ========================================= */
 .task-info-summary {
     background-color: #e8f0e7;
@@ -475,7 +477,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .data-table .sub-th.worked-th, .data-table .worked-cell {
-    background-color: #e8f0e7; /* Sfondo leggero per evidenziare "Lavorate" */
+    background-color: #e8f0e7;
     color: var(--dark-green);
     font-weight: 500;
 }
@@ -625,4 +627,48 @@ input:focus, select:focus, textarea:focus {
 .task-header-info p {
     margin: 8px 0;
     color: #444;
+}
+
+/* =========================================
+   SHARED COMPONENTS - EMPTY STATES
+   ========================================= */
+.empty-state-msg {
+    background-color: #fdfdfd;
+    border: 2px dashed var(--border-color);
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    margin-top: 15px;
+}
+
+.empty-state-msg p {
+    margin: 0 0 10px 0;
+    font-size: 0.95em;
+}
+
+.empty-state-msg a {
+    color: var(--mid-green);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.95em;
+}
+
+.empty-state-msg a:hover {
+    text-decoration: underline;
+    color: var(--dark-green);
+}
+
+.empty-state-small {
+    padding: 12px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 15px;
+    border-style: solid;
+    border-width: 1px;
+}
+
+.empty-state-small p {
+    margin: 0;
+    font-style: italic;
 }
