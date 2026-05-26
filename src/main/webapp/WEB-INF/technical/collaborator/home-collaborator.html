@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Collaborator Home - Project Management</title>
     <link rel="stylesheet" th:href="@{/global.css}">
-    <link rel="stylesheet" href="../../../global.css">
 </head>
 <body>
 
@@ -39,18 +38,10 @@
 
                     <ul class="collab-wp-list" th:if="${selectedProject != null && selectedProject.id == p.id}">
 
-                        <li th:if="${#lists.isEmpty(assignedWps)}" style="font-style: italic; font-size: 0.85em; color: gray; margin-left: 10px;">
-                            No WP found.
-                        </li>
-
                         <th:block th:each="wp : ${assignedWps}">
                             <li class="wp-title" th:text="${'WP' + wp.sequenceNumber + ' - ' + wp.title}">WP Title</li>
 
                             <ul class="collab-task-list">
-
-                                <li th:if="${#lists.isEmpty(assignedTasksMap.get(wp.id))}" style="font-style: italic; font-size: 0.8em; color: gray;">
-                                    No tasks assigned.
-                                </li>
 
                                 <li th:each="t : ${assignedTasksMap.get(wp.id)}">
                                     <a th:href="@{/technical/collaborator/home(projectId=${p.id}, taskId=${t.id})}"

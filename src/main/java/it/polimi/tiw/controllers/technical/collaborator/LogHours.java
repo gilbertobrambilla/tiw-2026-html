@@ -2,6 +2,7 @@ package it.polimi.tiw.controllers.technical.collaborator;
 
 import it.polimi.tiw.beans.Task;
 import it.polimi.tiw.beans.UserLogin;
+import it.polimi.tiw.dao.ProjectDAO;
 import it.polimi.tiw.dao.TaskDAO;
 import it.polimi.tiw.dao.TaskHoursDAO;
 import it.polimi.tiw.utils.DatabaseConnection;
@@ -15,10 +16,9 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Controller used for the submission and processing of logged hours by a collaborator.
- */
 @WebServlet("/technical/collaborator/log-hours")
 public class LogHours extends HttpServlet {
 
@@ -26,8 +26,8 @@ public class LogHours extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // session and user details are retrieved
         HttpSession session = request.getSession();
-        UserLogin user = (UserLogin) session.getAttribute("user");
-        int userId = user.getId();
+        UserLogin loggedInUser = (UserLogin) session.getAttribute("user");
+        int userId = loggedInUser.getId();
 
         // request parameters are extracted
         String projectIdParam = request.getParameter("projectId");
@@ -40,7 +40,8 @@ public class LogHours extends HttpServlet {
 
         // syntax checks for identifiers are performed
         if (projectIdParam == null || projectIdParam.isEmpty() || taskIdParam == null || taskIdParam.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "missing identifiers");
+            request.setAttribute("homeCollaboratorGlobalError", "missing identifiers");
+            request.getRequestDispatcher(forwardPath).forward(request, response);
             return;
         }
 
@@ -51,23 +52,33 @@ public class LogHours extends HttpServlet {
             projectId = Integer.parseInt(projectIdParam);
             taskId = Integer.parseInt(taskIdParam);
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid format for identifiers");
+            request.setAttribute("homeCollaboratorGlobalError", "invalid format for identifiers");
+            request.getRequestDispatcher(forwardPath).forward(request, response);
             return;
         }
 
-        int month;
-        int workedHours;
+        List<String> formErrors = new ArrayList<>();
+        int month = 0;
+        int workedHours = 0;
 
         // syntax checks for input values are performed
         try {
             month = Integer.parseInt(monthParam);
+        } catch (NumberFormatException | NullPointerException e) {
+            formErrors.add("month must be a valid number");
+        }
+
+        try {
             workedHours = Integer.parseInt(workedHoursParam);
             if (workedHours < 0) {
-                throw new NumberFormatException();
+                formErrors.add("worked hours must be non-negative");
             }
-        } catch (NumberFormatException e) {
-            // syntactic errors and previous values are saved in request
-            request.setAttribute("logGenericError", "invalid format for month or hours");
+        } catch (NumberFormatException | NullPointerException e) {
+            formErrors.add("worked hours must be a valid number");
+        }
+
+        if (!formErrors.isEmpty()) {
+            request.setAttribute("formErrors", formErrors);
             request.setAttribute("monthValue", monthParam);
             request.setAttribute("workedHoursValue", workedHoursParam);
             request.getRequestDispatcher(forwardPath).forward(request, response);
@@ -78,20 +89,29 @@ public class LogHours extends HttpServlet {
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
             TaskDAO taskDAO = new TaskDAO(connection);
             TaskHoursDAO taskHoursDAO = new TaskHoursDAO(connection);
+            ProjectDAO projectDAO = new ProjectDAO(connection);
 
-            // task existence and user authorization are verified
+            // project status and authorization are verified
+            if (projectDAO.getProjectByIdAndWorker(projectId, userId) == null) {
+                request.setAttribute("homeCollaboratorGlobalError", "project not assigned or unauthorized");
+                request.getRequestDispatcher(forwardPath).forward(request, response);
+                return;
+            }
+
+            // task existence, user authorization and project matching are verified
             Task task = taskDAO.getTaskByIdAndWorker(taskId, userId);
-            if (task == null) {
-                request.setAttribute("logGenericError", "unauthorized access or task not found");
+            if (task == null || taskDAO.getProjectIdByTask(taskId) != projectId) {
+                request.setAttribute("homeCollaboratorGlobalError", "unauthorized access or task mismatch");
                 request.getRequestDispatcher(forwardPath).forward(request, response);
                 return;
             }
 
             // semantic interval boundaries are checked
             if (month < task.getStartMonth() || month > task.getEndMonth()) {
-                request.setAttribute("monthError", "month must be within task boundaries");
-                request.setAttribute("monthValue", month);
-                request.setAttribute("workedHoursValue", workedHours);
+                formErrors.add("month must be within task boundaries");
+                request.setAttribute("formErrors", formErrors);
+                request.setAttribute("monthValue", monthParam);
+                request.setAttribute("workedHoursValue", workedHoursParam);
                 request.getRequestDispatcher(forwardPath).forward(request, response);
                 return;
             }
@@ -101,7 +121,7 @@ public class LogHours extends HttpServlet {
 
         } catch (SQLException e) {
             // database exception is handled
-            request.setAttribute("logGenericError", "database processing failure");
+            request.setAttribute("homeCollaboratorGlobalError", "database processing failure");
             request.getRequestDispatcher(forwardPath).forward(request, response);
             return;
         }
