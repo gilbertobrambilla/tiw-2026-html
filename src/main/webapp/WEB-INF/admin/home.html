@@ -11,9 +11,7 @@
     <span th:text="${'Welcome, ' + session.user.firstName + ' ' + session.user.lastName}">Welcome, Admin</span>
     <div class="nav-links">
         <span class="active-nav">Home</span>
-        <span class="nav-separator">|</span>
         <a th:href="@{/admin/verify-projects}">Verify Projects</a>
-        <span class="nav-separator">|</span>
         <a th:href="@{/logout}">Logout</a>
     </div>
 </div>
@@ -22,7 +20,11 @@
     <div class="row">
         <div class="form-container">
             <h3>Create New Project</h3>
-            <form th:action="@{/admin/create-project}" method="POST">
+            <div th:if="${#lists.isEmpty(technicalUsers)}" class="empty-state-msg">
+                <p>No Technical Users found. Cannot create a project.</p>
+            </div>
+
+            <form th:if="${!#lists.isEmpty(technicalUsers)}" th:action="@{/admin/create-project}" method="POST">
 
                 <div class="form-group">
                     <label>Project Title:</label>
@@ -39,7 +41,14 @@
                 <div class="form-group">
                     <label>Technical Manager:</label>
                     <select name="managedBy" required>
-                        <option value="">-- Select Technical User --</option>
+                        <option th:if="${#lists.isEmpty(technicalUsers)}" value="" selected disabled>
+                            -- No Technical Users found --
+                        </option>
+
+                        <option th:if="${!#lists.isEmpty(technicalUsers)}" value="">
+                            -- Select Technical User --
+                        </option>
+
                         <option th:each="u : ${technicalUsers}"
                                 th:value="${u.id}"
                                 th:text="${u.firstName + ' ' + u.lastName}"
@@ -59,10 +68,14 @@
     <div class="row">
         <div class="form-container">
             <h3>Create New WP</h3>
-            <form th:action="@{/admin/create-wp}" method="POST">
 
+            <div th:if="${#lists.isEmpty(createdProjects)}" class="empty-state-msg">
+                <p>No projects in "CREATED" status are available.</p>
+            </div>
+
+            <form th:if="${!#lists.isEmpty(createdProjects)}" th:action="@{/admin/create-wp}" method="POST">
                 <div class="form-group">
-                    <label>Assign to Project:</label>
+                    <label>Select Project:</label>
                     <select name="projectId" required>
                         <option value="">-- Select Project (Status: Created Only) --</option>
                         <option th:each="p : ${createdProjects}"
@@ -103,23 +116,23 @@
     <div class="row">
         <div class="form-container">
             <h3>Create New Task</h3>
-            <form th:action="@{/admin/create-task}" method="POST">
 
+            <div th:if="${#maps.isEmpty(projectWpMap)}" class="empty-state-msg">
+                <p>No WP is available.</p>
+            </div>
+
+            <form th:if="${!#maps.isEmpty(projectWpMap)}" th:action="@{/admin/create-task}" method="POST">
                 <div class="form-group">
-                    <label>Assign to WP:</label>
+                    <label>Select Project and WP:</label>
                     <select name="wpId" required>
                         <option value="">-- Select WP --</option>
-
                         <th:block th:each="entry : ${projectWpMap}">
-
                             <option disabled th:text="${'--- PROJECT: ' + entry.key.title + ' ---'}"></option>
-
                             <option th:each="wp : ${entry.value}"
                                     th:value="${wp.id}"
                                     th:text="${'WP' + wp.sequenceNumber + ' - ' + wp.title}"
                                     th:selected="${wp.id == taskWpValue}">
                             </option>
-
                         </th:block>
                     </select>
                     <span class="error-text" th:if="${taskWpError != null}" th:text="${taskWpError}"></span>
@@ -156,7 +169,6 @@
             </form>
         </div>
     </div>
-
 </div>
 
 </body>

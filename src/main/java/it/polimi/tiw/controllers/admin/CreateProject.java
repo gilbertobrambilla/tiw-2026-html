@@ -1,6 +1,7 @@
 package it.polimi.tiw.controllers.admin;
 
 import it.polimi.tiw.beans.UserRole;
+import it.polimi.tiw.dao.ProjectDAO;
 import it.polimi.tiw.dao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,7 +13,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import it.polimi.tiw.beans.UserLogin;
-import it.polimi.tiw.dao.ProjectDAO;
 import it.polimi.tiw.utils.DatabaseConnection;
 
 /**

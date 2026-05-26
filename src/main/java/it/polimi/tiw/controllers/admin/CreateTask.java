@@ -20,7 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * Controller utilized for task creation and related business logic validation.
+ * Controller used for task creation and related business logic validation.
  */
 @WebServlet("/admin/create-task")
 public class CreateTask extends HttpServlet {
