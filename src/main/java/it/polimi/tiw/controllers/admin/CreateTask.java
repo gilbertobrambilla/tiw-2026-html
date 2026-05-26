@@ -18,50 +18,43 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Controller used for task creation and related business logic validation.
- */
 @WebServlet("/admin/create-task")
 public class CreateTask extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // request parameters are extracted
         String wpIdStr = request.getParameter("wpId");
         String title = request.getParameter("title");
         String description = request.getParameter("description");
         String startMonthStr = request.getParameter("startMonth");
         String endMonthStr = request.getParameter("endMonth");
 
-        boolean hasError = false;
+        List<String> formErrors = new ArrayList<>();
 
         // title validation is performed
         if (title == null || title.trim().isEmpty()) {
-            request.setAttribute("taskTitleError", "Task title cannot be empty");
-            hasError = true;
+            formErrors.add("Task title cannot be empty");
         } else if (title.length() > 100) {
-            request.setAttribute("taskTitleError", "Task title cannot exceed 100 characters");
-            hasError = true;
+            formErrors.add("Task title cannot exceed 100 characters");
         }
 
         // description validation is performed
         if (description == null || description.trim().isEmpty()) {
-            request.setAttribute("taskDescriptionError", "Task description cannot be empty");
-            hasError = true;
+            formErrors.add("Task description cannot be empty");
         }
 
-        // wp identification validation is performed
+        // wp validation is performed
         int wpId = 0;
         if (wpIdStr == null || wpIdStr.trim().isEmpty()) {
-            request.setAttribute("taskWpError", "WP must be selected");
-            hasError = true;
+            formErrors.add("WP must be selected");
         } else {
             try {
                 wpId = Integer.parseInt(wpIdStr);
             } catch (NumberFormatException e) {
-                request.setAttribute("taskWpError", "Invalid WP identification");
-                hasError = true;
+                formErrors.add("Invalid WP identification");
             }
         }
 
@@ -72,38 +65,21 @@ public class CreateTask extends HttpServlet {
             startMonth = Integer.parseInt(startMonthStr);
             endMonth = Integer.parseInt(endMonthStr);
             if (startMonth <= 0 || endMonth <= 0) {
-                request.setAttribute("taskStartMonthError", "Months must be strictly positive");
-                hasError = true;
+                formErrors.add("Months must be strictly positive");
             } else if (startMonth > endMonth) {
-                request.setAttribute("taskEndMonthError", "End month cannot precede start month");
-                hasError = true;
+                formErrors.add("End month cannot precede start month");
             }
         } catch (NumberFormatException | NullPointerException e) {
-            request.setAttribute("taskStartMonthError", "Valid numeric months are required");
-            hasError = true;
+            formErrors.add("Valid numeric months are required");
         }
 
-        // previously inserted values are preserved for the view
-        request.setAttribute("taskWpValue", wpIdStr);
-        request.setAttribute("taskTitleValue", title);
-        request.setAttribute("taskDescriptionValue", description);
-        request.setAttribute("taskStartMonthValue", startMonthStr);
-        request.setAttribute("taskEndMonthValue", endMonthStr);
-
-        // request is forwarded on syntax error detection
-        if (hasError) {
-            request.getRequestDispatcher("/admin/home").forward(request, response);
-            return;
-        }
-
-        // session user is extracted assuming filter validation occurred
+        // session parameters are extracted
         HttpSession session = request.getSession();
-        UserLogin admin = (UserLogin) session.getAttribute("user");
+        UserLogin loggedInUser = (UserLogin) session.getAttribute("user");
 
-        // database operations are executed within a transactional context
+        // transactional database operation is executed
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
 
-            // auto-commit is disabled to ensure atomicity
             connection.setAutoCommit(false);
 
             try {
@@ -111,46 +87,42 @@ public class CreateTask extends HttpServlet {
                 ProjectDAO projectDAO = new ProjectDAO(connection);
                 TaskDAO taskDAO = new TaskDAO(connection);
 
-                // wp existence and authorization are verified
-                WP wp = wpDAO.getWPByIdAndCreator(wpId, admin.getId());
-                if (wp == null) {
-                    request.setAttribute("taskWpError", "WP not found or authorization denied");
-                    hasError = true;
-                } else {
-                    // parent project status is verified
-                    Project project = projectDAO.getProjectByIdAndCreator(wp.getProjectId(), admin.getId());
-                    if (project == null || project.getStatus() != ProjectStatus.created) {
-                        request.setAttribute("taskWpError", "Tasks can only be added to WP belonging to 'created' projects");
-                        hasError = true;
-                    } else if (startMonth < wp.getStartMonth() || endMonth > wp.getEndMonth()) {
-                        // interval limits are verified
-                        request.setAttribute("taskEndMonthError", "Task duration (M" + startMonth + "-M" + endMonth +
-                                ") must fall within WP duration (M" + wp.getStartMonth() + "-M" + wp.getEndMonth() + ")");
-                        hasError = true;
+                if (formErrors.isEmpty()) {
+                    WP wp = wpDAO.getWPByIdAndCreator(wpId, loggedInUser.getId());
+                    if (wp == null) {
+                        formErrors.add("WP not found or authorization denied");
+                    } else {
+                        Project project = projectDAO.getProjectByIdAndCreator(wp.getProjectId(), loggedInUser.getId());
+                        if (project == null || project.getStatus() != ProjectStatus.created) {
+                            formErrors.add("Tasks can only be added to WP belonging to 'created' projects");
+                        } else if (startMonth < wp.getStartMonth() || endMonth > wp.getEndMonth()) {
+                            formErrors.add("Task duration (M" + startMonth + "-M" + endMonth + ") must fall within WP duration (M" + wp.getStartMonth() + "-M" + wp.getEndMonth() + ")");
+                        }
                     }
                 }
 
-                // business logic errors trigger rollback and forward
-                if (hasError) {
+                // request is forwarded on error detection
+                if (!formErrors.isEmpty()) {
                     connection.rollback();
+                    request.setAttribute("formErrors", formErrors);
+                    request.setAttribute("taskWpValue", wpIdStr);
+                    request.setAttribute("taskTitleValue", title);
+                    request.setAttribute("taskDescriptionValue", description);
+                    request.setAttribute("taskStartMonthValue", startMonthStr);
+                    request.setAttribute("taskEndMonthValue", endMonthStr);
+
                     request.getRequestDispatcher("/admin/home").forward(request, response);
                     return;
                 }
 
-                // task insertion is performed
                 taskDAO.createTask(wpId, title, description, startMonth, endMonth);
-
-                // transaction is finalized
                 connection.commit();
 
             } catch (SQLException e) {
-                // transaction is rolled back on database failure
                 connection.rollback();
-                request.setAttribute("taskGenericError", "A database error occurred during creation");
-                request.getRequestDispatcher("/admin/home").forward(request, response);
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error occurred during creation");
                 return;
             } finally {
-                // connection default state is restored
                 connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
@@ -158,7 +130,7 @@ public class CreateTask extends HttpServlet {
             return;
         }
 
-        // redirect is performed on successful creation
+        // redirect is performed on success
         response.sendRedirect(getServletContext().getContextPath() + "/admin/home");
     }
 }

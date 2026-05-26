@@ -1,23 +1,23 @@
 package it.polimi.tiw.controllers.admin;
 
+import it.polimi.tiw.beans.UserLogin;
 import it.polimi.tiw.beans.UserRole;
 import it.polimi.tiw.dao.ProjectDAO;
 import it.polimi.tiw.dao.UserDAO;
+import it.polimi.tiw.utils.DatabaseConnection;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import it.polimi.tiw.beans.UserLogin;
-import it.polimi.tiw.utils.DatabaseConnection;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Project creation controller handling project submission and validation.
- */
 @WebServlet("/admin/create-project")
 public class CreateProject extends HttpServlet {
 
@@ -27,65 +27,61 @@ public class CreateProject extends HttpServlet {
         String durationStr = request.getParameter("duration");
         String managedByStr = request.getParameter("managedBy");
 
-        boolean hasError = false;
+        List<String> formErrors = new ArrayList<>();
 
-        // title validation
+        // title validation is performed
         if (title == null || title.trim().isEmpty()) {
-            request.setAttribute("projectTitleError", "Project title cannot be empty");
-            hasError = true;
+            formErrors.add("Project title cannot be empty");
         } else if (title.length() > 100) {
-            request.setAttribute("projectTitleError", "Project title cannot exceed 100 characters");
-            hasError = true;
+            formErrors.add("Project title cannot exceed 100 characters");
         }
 
-        // duration validation
+        // duration validation is performed
         int duration = 0;
         if (durationStr == null || durationStr.trim().isEmpty()) {
-            request.setAttribute("projectDurationError", "Project duration cannot be empty");
-            hasError = true;
+            formErrors.add("Project duration cannot be empty");
         } else {
             try {
                 duration = Integer.parseInt(durationStr);
                 if (duration <= 0) {
-                    request.setAttribute("projectDurationError", "Project duration must be greater than zero");
-                    hasError = true;
+                    formErrors.add("Project duration must be greater than zero");
                 }
             } catch (NumberFormatException e) {
-                request.setAttribute("projectDurationError", "Project duration must be a valid integer");
-                hasError = true;
+                formErrors.add("Project duration must be a valid integer");
             }
         }
 
-        // manager format validation
+        // manager validation is performed
         int managedById = 0;
         if (managedByStr == null || managedByStr.trim().isEmpty()) {
-            request.setAttribute("projectManagedByError", "Technical user must be selected");
-            hasError = true;
+            formErrors.add("Technical user must be selected");
         } else {
             try {
                 managedById = Integer.parseInt(managedByStr);
             } catch (NumberFormatException e) {
-                request.setAttribute("projectManagedByError", "Invalid user identification");
-                hasError = true;
+                formErrors.add("Invalid user identification");
             }
         }
 
-        // database operations are executed
+        // session parameters are extracted
+        HttpSession session = request.getSession();
+        UserLogin loggedInUser = (UserLogin) session.getAttribute("user");
+
+        // database validation is executed
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
 
-            // manager database validation is performed if format is valid
-            if (!hasError && managedById > 0) {
+            if (formErrors.isEmpty() && managedById > 0) {
                 UserDAO userDAO = new UserDAO(connection);
                 UserRole role = userDAO.getRoleByUser(managedById);
 
                 if (role != UserRole.technical) {
-                    request.setAttribute("projectManagedByError", "User is not a valid technical user");
-                    hasError = true;
+                    formErrors.add("User is not a valid technical user");
                 }
             }
 
-            // request attributes are preserved and forwarded on error
-            if (hasError) {
+            // request is forwarded on error detection
+            if (!formErrors.isEmpty()) {
+                request.setAttribute("formErrors", formErrors);
                 request.setAttribute("projectTitleValue", title);
                 request.setAttribute("projectDurationValue", durationStr);
                 request.setAttribute("projectManagedByValue", managedByStr);
@@ -94,21 +90,15 @@ public class CreateProject extends HttpServlet {
                 return;
             }
 
-            // session user is retrieved
-            HttpSession session = request.getSession();
-            UserLogin loggedInUser = (UserLogin) session.getAttribute("user");
-
-            // project is created
             ProjectDAO projectDAO = new ProjectDAO(connection);
             projectDAO.createProject(title, duration, loggedInUser.getId(), managedById);
 
         } catch (SQLException e) {
-            // internal server error is dispatched on database failure
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database failure occurred during project creation");
             return;
         }
 
-        // redirect is performed on successful creation
+        // redirect is performed on success
         response.sendRedirect(getServletContext().getContextPath() + "/admin/home");
     }
 }

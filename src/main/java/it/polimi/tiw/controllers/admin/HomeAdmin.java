@@ -27,13 +27,10 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Controller used for the administrator home page rendering.
- */
 @WebServlet("/admin/home")
-public class Home extends HttpServlet {
+public class HomeAdmin extends HttpServlet {
     private TemplateEngine templateEngine;
-    private static final String TEMPLATE_PATH = "/WEB-INF/admin/home.html";
+    private static final String TEMPLATE_PATH = "/WEB-INF/admin/home-admin.html";
 
     @Override
     public void init() throws ServletException {
@@ -53,46 +50,40 @@ public class Home extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // thymeleaf web application context initialization
         JakartaServletWebApplication webApplication = JakartaServletWebApplication.buildApplication(getServletContext());
         WebContext ctx = new WebContext(webApplication.buildExchange(request, response), request.getLocale());
 
-        // session and current user are retrieved
+        // session parameters are extracted
         HttpSession session = request.getSession();
-        UserLogin admin = (UserLogin) session.getAttribute("user");
+        UserLogin loggedInUser = (UserLogin) session.getAttribute("user");
 
-        // database connection is established
+        // database data fetch is executed
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
             UserDAO userDAO = new UserDAO(connection);
             ProjectDAO projectDAO = new ProjectDAO(connection);
             WPDAO wpDAO = new WPDAO(connection);
 
-            // technical users are fetched
             List<User> technicalUsers = userDAO.getUsersByRole("technical");
             ctx.setVariable("technicalUsers", technicalUsers);
 
-            // created projects belonging to the admin are fetched
-            List<Project> createdProjects = projectDAO.getProjectsByCreatorAndStatus(admin.getId(), ProjectStatus.created);
+            List<Project> createdProjects = projectDAO.getProjectsByCreatorAndStatus(loggedInUser.getId(), ProjectStatus.created);
             ctx.setVariable("createdProjects", createdProjects);
 
-            // wps grouped by created projects are fetched
-            Map<Project, List<WP>> projectWpMap = wpDAO.getWPGroupedByProject(admin.getId());
+            Map<Project, List<WP>> projectWpMap = wpDAO.getWPGroupedByProject(loggedInUser.getId());
             ctx.setVariable("projectWpMap", projectWpMap);
 
         } catch (SQLException e) {
-            // database error is handled
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database connection failure");
             return;
         }
 
-        // template processing and response generation
+        // template processing is executed
         response.setContentType("text/html;charset=UTF-8");
         templateEngine.process(TEMPLATE_PATH, ctx, response.getWriter());
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // requests are routed to the get handler to support forwarded requests from action controllers
         doGet(request, response);
     }
 }

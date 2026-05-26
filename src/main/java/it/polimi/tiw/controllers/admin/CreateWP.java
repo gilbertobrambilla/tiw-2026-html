@@ -16,43 +16,37 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Controller used for wp creation and related business logic validation.
- */
 @WebServlet("/admin/create-wp")
 public class CreateWP extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // request parameters are extracted
         String projectIdStr = request.getParameter("projectId");
         String title = request.getParameter("title");
         String startMonthStr = request.getParameter("startMonth");
         String endMonthStr = request.getParameter("endMonth");
 
-        boolean hasError = false;
+        List<String> formErrors = new ArrayList<>();
 
         // title validation is performed
         if (title == null || title.trim().isEmpty()) {
-            request.setAttribute("wpTitleError", "Title cannot be empty");
-            hasError = true;
+            formErrors.add("Title cannot be empty");
         } else if (title.length() > 100) {
-            request.setAttribute("wpTitleError", "Title cannot exceed 100 characters");
-            hasError = true;
+            formErrors.add("Title cannot exceed 100 characters");
         }
 
-        // project identification validation is performed
+        // project validation is performed
         int projectId = 0;
         if (projectIdStr == null || projectIdStr.trim().isEmpty()) {
-            request.setAttribute("wpProjectError", "Project must be selected");
-            hasError = true;
+            formErrors.add("Project must be selected");
         } else {
             try {
                 projectId = Integer.parseInt(projectIdStr);
             } catch (NumberFormatException e) {
-                request.setAttribute("wpProjectError", "Invalid project identification");
-                hasError = true;
+                formErrors.add("Invalid project identification");
             }
         }
 
@@ -63,77 +57,59 @@ public class CreateWP extends HttpServlet {
             startMonth = Integer.parseInt(startMonthStr);
             endMonth = Integer.parseInt(endMonthStr);
             if (startMonth <= 0 || endMonth <= 0) {
-                request.setAttribute("wpStartMonthError", "Months must be positive");
-                hasError = true;
+                formErrors.add("Months must be positive");
             } else if (startMonth > endMonth) {
-                request.setAttribute("wpEndMonthError", "End month cannot precede start month");
-                hasError = true;
+                formErrors.add("End month cannot precede start month");
             }
         } catch (NumberFormatException | NullPointerException e) {
-            request.setAttribute("wpStartMonthError", "Valid numeric months are required");
-            hasError = true;
+            formErrors.add("Valid numeric months are required");
         }
 
-        // previously inserted values are preserved for the view
-        request.setAttribute("wpProjectIdValue", projectIdStr);
-        request.setAttribute("wpTitleValue", title);
-        request.setAttribute("wpStartMonthValue", startMonthStr);
-        request.setAttribute("wpEndMonthValue", endMonthStr);
-
-        // request is forwarded on syntax error detection
-        if (hasError) {
-            request.getRequestDispatcher("/admin/home").forward(request, response);
-            return;
-        }
-
-        // session user is extracted assuming filter validation occurred
+        // session parameters are extracted
         HttpSession session = request.getSession();
-        UserLogin admin = (UserLogin) session.getAttribute("user");
+        UserLogin loggedInUser = (UserLogin) session.getAttribute("user");
 
-        // database operations are executed within a transactional context
+        // transactional database operation is executed
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
 
-            // auto-commit is disabled to ensure atomicity
             connection.setAutoCommit(false);
 
             try {
                 ProjectDAO projectDAO = new ProjectDAO(connection);
                 WPDAO wpDAO = new WPDAO(connection);
 
-                // project existence and authorization are verified
-                Project project = projectDAO.getProjectByIdAndCreator(projectId, admin.getId());
-                if (project == null) {
-                    request.setAttribute("wpProjectError", "Project not found or authorization denied");
-                    hasError = true;
-                } else if (project.getStatus() != ProjectStatus.created) {
-                    request.setAttribute("wpProjectError", "WP can only be added to projects in 'created' status");
-                    hasError = true;
-                } else if (endMonth > project.getDurationMonths()) {
-                    request.setAttribute("wpEndMonthError", "Duration exceeds project length (Max: " + project.getDurationMonths() + ")");
-                    hasError = true;
+                if (formErrors.isEmpty()) {
+                    Project project = projectDAO.getProjectByIdAndCreator(projectId, loggedInUser.getId());
+                    if (project == null) {
+                        formErrors.add("Project not found or authorization denied");
+                    } else if (project.getStatus() != ProjectStatus.created) {
+                        formErrors.add("WP can only be added to projects in 'created' status");
+                    } else if (endMonth > project.getDurationMonths()) {
+                        formErrors.add("Duration exceeds project length (Max: " + project.getDurationMonths() + ")");
+                    }
                 }
 
-                // business logic errors trigger rollback and forward
-                if (hasError) {
+                // request is forwarded on error detection
+                if (!formErrors.isEmpty()) {
                     connection.rollback();
+                    request.setAttribute("formErrors", formErrors);
+                    request.setAttribute("wpProjectIdValue", projectIdStr);
+                    request.setAttribute("wpTitleValue", title);
+                    request.setAttribute("wpStartMonthValue", startMonthStr);
+                    request.setAttribute("wpEndMonthValue", endMonthStr);
+
                     request.getRequestDispatcher("/admin/home").forward(request, response);
                     return;
                 }
 
-                // wp insertion is performed
                 wpDAO.createWP(projectId, title, startMonth, endMonth);
-
-                // transaction is finalized
                 connection.commit();
 
             } catch (SQLException e) {
-                // transaction is rolled back on database failure
                 connection.rollback();
-                request.setAttribute("wpGenericError", "A database error occurred during creation");
-                request.getRequestDispatcher("/admin/home").forward(request, response);
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error occurred during creation");
                 return;
             } finally {
-                // connection default state is restored
                 connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
@@ -141,7 +117,7 @@ public class CreateWP extends HttpServlet {
             return;
         }
 
-        // redirect is performed on successful creation
+        // redirect is performed on success
         response.sendRedirect(getServletContext().getContextPath() + "/admin/home");
     }
 }
