@@ -27,39 +27,39 @@ public class CreateProject extends HttpServlet {
         String durationStr = request.getParameter("duration");
         String managedByStr = request.getParameter("managedBy");
 
-        List<String> formErrors = new ArrayList<>();
+        List<String> projectFormErrors = new ArrayList<>();
 
         // title validation is performed
         if (title == null || title.trim().isEmpty()) {
-            formErrors.add("Project title cannot be empty");
+            projectFormErrors.add("Project title cannot be empty");
         } else if (title.length() > 100) {
-            formErrors.add("Project title cannot exceed 100 characters");
+            projectFormErrors.add("Project title cannot exceed 100 characters");
         }
 
         // duration validation is performed
         int duration = 0;
         if (durationStr == null || durationStr.trim().isEmpty()) {
-            formErrors.add("Project duration cannot be empty");
+            projectFormErrors.add("Project duration cannot be empty");
         } else {
             try {
                 duration = Integer.parseInt(durationStr);
                 if (duration <= 0) {
-                    formErrors.add("Project duration must be greater than zero");
+                    projectFormErrors.add("Project duration must be greater than zero");
                 }
             } catch (NumberFormatException e) {
-                formErrors.add("Project duration must be a valid integer");
+                projectFormErrors.add("Project duration must be a valid integer");
             }
         }
 
         // manager validation is performed
         int managedById = 0;
         if (managedByStr == null || managedByStr.trim().isEmpty()) {
-            formErrors.add("Technical user must be selected");
+            projectFormErrors.add("Technical user must be selected");
         } else {
             try {
                 managedById = Integer.parseInt(managedByStr);
             } catch (NumberFormatException e) {
-                formErrors.add("Invalid user identification");
+                projectFormErrors.add("Invalid user identification");
             }
         }
 
@@ -70,18 +70,18 @@ public class CreateProject extends HttpServlet {
         // database validation is executed
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
 
-            if (formErrors.isEmpty() && managedById > 0) {
+            if (projectFormErrors.isEmpty() && managedById > 0) {
                 UserDAO userDAO = new UserDAO(connection);
                 UserRole role = userDAO.getRoleByUser(managedById);
 
                 if (role != UserRole.technical) {
-                    formErrors.add("User is not a valid technical user");
+                    projectFormErrors.add("User is not a valid technical user");
                 }
             }
 
             // request is forwarded on error detection
-            if (!formErrors.isEmpty()) {
-                request.setAttribute("formErrors", formErrors);
+            if (!projectFormErrors.isEmpty()) {
+                request.setAttribute("projectFormErrors", projectFormErrors);
                 request.setAttribute("projectTitleValue", title);
                 request.setAttribute("projectDurationValue", durationStr);
                 request.setAttribute("projectManagedByValue", managedByStr);

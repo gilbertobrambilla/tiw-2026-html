@@ -32,29 +32,29 @@ public class CreateTask extends HttpServlet {
         String startMonthStr = request.getParameter("startMonth");
         String endMonthStr = request.getParameter("endMonth");
 
-        List<String> formErrors = new ArrayList<>();
+        List<String> taskFormErrors = new ArrayList<>();
 
         // title validation is performed
         if (title == null || title.trim().isEmpty()) {
-            formErrors.add("Task title cannot be empty");
+            taskFormErrors.add("Task title cannot be empty");
         } else if (title.length() > 100) {
-            formErrors.add("Task title cannot exceed 100 characters");
+            taskFormErrors.add("Task title cannot exceed 100 characters");
         }
 
         // description validation is performed
         if (description == null || description.trim().isEmpty()) {
-            formErrors.add("Task description cannot be empty");
+            taskFormErrors.add("Task description cannot be empty");
         }
 
         // wp validation is performed
         int wpId = 0;
         if (wpIdStr == null || wpIdStr.trim().isEmpty()) {
-            formErrors.add("WP must be selected");
+            taskFormErrors.add("WP must be selected");
         } else {
             try {
                 wpId = Integer.parseInt(wpIdStr);
             } catch (NumberFormatException e) {
-                formErrors.add("Invalid WP identification");
+                taskFormErrors.add("Invalid WP identification");
             }
         }
 
@@ -65,12 +65,12 @@ public class CreateTask extends HttpServlet {
             startMonth = Integer.parseInt(startMonthStr);
             endMonth = Integer.parseInt(endMonthStr);
             if (startMonth <= 0 || endMonth <= 0) {
-                formErrors.add("Months must be strictly positive");
+                taskFormErrors.add("Months must be strictly positive");
             } else if (startMonth > endMonth) {
-                formErrors.add("End month cannot precede start month");
+                taskFormErrors.add("End month cannot precede start month");
             }
         } catch (NumberFormatException | NullPointerException e) {
-            formErrors.add("Valid numeric months are required");
+            taskFormErrors.add("Valid numeric months are required");
         }
 
         // session parameters are extracted
@@ -87,24 +87,24 @@ public class CreateTask extends HttpServlet {
                 ProjectDAO projectDAO = new ProjectDAO(connection);
                 TaskDAO taskDAO = new TaskDAO(connection);
 
-                if (formErrors.isEmpty()) {
+                if (taskFormErrors.isEmpty()) {
                     WP wp = wpDAO.getWPByIdAndCreator(wpId, loggedInUser.getId());
                     if (wp == null) {
-                        formErrors.add("WP not found or authorization denied");
+                        taskFormErrors.add("WP not found or authorization denied");
                     } else {
                         Project project = projectDAO.getProjectByIdAndCreator(wp.getProjectId(), loggedInUser.getId());
                         if (project == null || project.getStatus() != ProjectStatus.created) {
-                            formErrors.add("Tasks can only be added to WP belonging to 'created' projects");
+                            taskFormErrors.add("Tasks can only be added to WP belonging to 'created' projects");
                         } else if (startMonth < wp.getStartMonth() || endMonth > wp.getEndMonth()) {
-                            formErrors.add("Task duration (M" + startMonth + "-M" + endMonth + ") must fall within WP duration (M" + wp.getStartMonth() + "-M" + wp.getEndMonth() + ")");
+                            taskFormErrors.add("Task duration (M" + startMonth + "-M" + endMonth + ") must fall within WP duration (M" + wp.getStartMonth() + "-M" + wp.getEndMonth() + ")");
                         }
                     }
                 }
 
                 // request is forwarded on error detection
-                if (!formErrors.isEmpty()) {
+                if (!taskFormErrors.isEmpty()) {
                     connection.rollback();
-                    request.setAttribute("formErrors", formErrors);
+                    request.setAttribute("taskFormErrors", taskFormErrors);
                     request.setAttribute("taskWpValue", wpIdStr);
                     request.setAttribute("taskTitleValue", title);
                     request.setAttribute("taskDescriptionValue", description);

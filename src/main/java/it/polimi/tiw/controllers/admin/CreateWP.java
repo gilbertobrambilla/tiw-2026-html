@@ -29,24 +29,24 @@ public class CreateWP extends HttpServlet {
         String startMonthStr = request.getParameter("startMonth");
         String endMonthStr = request.getParameter("endMonth");
 
-        List<String> formErrors = new ArrayList<>();
+        List<String> wpFormErrors = new ArrayList<>();
 
         // title validation is performed
         if (title == null || title.trim().isEmpty()) {
-            formErrors.add("Title cannot be empty");
+            wpFormErrors.add("Title cannot be empty");
         } else if (title.length() > 100) {
-            formErrors.add("Title cannot exceed 100 characters");
+            wpFormErrors.add("Title cannot exceed 100 characters");
         }
 
         // project validation is performed
         int projectId = 0;
         if (projectIdStr == null || projectIdStr.trim().isEmpty()) {
-            formErrors.add("Project must be selected");
+            wpFormErrors.add("Project must be selected");
         } else {
             try {
                 projectId = Integer.parseInt(projectIdStr);
             } catch (NumberFormatException e) {
-                formErrors.add("Invalid project identification");
+                wpFormErrors.add("Invalid project identification");
             }
         }
 
@@ -57,12 +57,12 @@ public class CreateWP extends HttpServlet {
             startMonth = Integer.parseInt(startMonthStr);
             endMonth = Integer.parseInt(endMonthStr);
             if (startMonth <= 0 || endMonth <= 0) {
-                formErrors.add("Months must be positive");
+                wpFormErrors.add("Months must be positive");
             } else if (startMonth > endMonth) {
-                formErrors.add("End month cannot precede start month");
+                wpFormErrors.add("End month cannot precede start month");
             }
         } catch (NumberFormatException | NullPointerException e) {
-            formErrors.add("Valid numeric months are required");
+            wpFormErrors.add("Valid numeric months are required");
         }
 
         // session parameters are extracted
@@ -78,21 +78,21 @@ public class CreateWP extends HttpServlet {
                 ProjectDAO projectDAO = new ProjectDAO(connection);
                 WPDAO wpDAO = new WPDAO(connection);
 
-                if (formErrors.isEmpty()) {
+                if (wpFormErrors.isEmpty()) {
                     Project project = projectDAO.getProjectByIdAndCreator(projectId, loggedInUser.getId());
                     if (project == null) {
-                        formErrors.add("Project not found or authorization denied");
+                        wpFormErrors.add("Project not found or authorization denied");
                     } else if (project.getStatus() != ProjectStatus.created) {
-                        formErrors.add("WP can only be added to projects in 'created' status");
+                        wpFormErrors.add("WP can only be added to projects in 'created' status");
                     } else if (endMonth > project.getDurationMonths()) {
-                        formErrors.add("Duration exceeds project length (Max: " + project.getDurationMonths() + ")");
+                        wpFormErrors.add("Duration exceeds project length (Max: " + project.getDurationMonths() + ")");
                     }
                 }
 
                 // request is forwarded on error detection
-                if (!formErrors.isEmpty()) {
+                if (!wpFormErrors.isEmpty()) {
                     connection.rollback();
-                    request.setAttribute("formErrors", formErrors);
+                    request.setAttribute("wpFormErrors", wpFormErrors);
                     request.setAttribute("wpProjectIdValue", projectIdStr);
                     request.setAttribute("wpTitleValue", title);
                     request.setAttribute("wpStartMonthValue", startMonthStr);
