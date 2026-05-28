@@ -5,10 +5,10 @@ public class Project {
     private final String title;
     private final int durationMonths;
     private final ProjectStatus status;
-    private final User createdBy;
-    private final User managedBy;
+    private final int createdBy;
+    private final int managedBy;
 
-    public Project(int id, String title, int durationMonths, ProjectStatus status, User createdBy, User managedBy) {
+    public Project(int id, String title, int durationMonths, ProjectStatus status, int createdBy, int managedBy) {
         this.id = id;
         this.title = title;
         this.durationMonths = durationMonths;
@@ -33,11 +33,11 @@ public class Project {
         return status;
     }
 
-    public User getCreatedBy() {
+    public int getCreatedBy() {
         return createdBy;
     }
 
-    public User getManagedBy() {
+    public int getManagedBy() {
         return managedBy;
     }
 }
