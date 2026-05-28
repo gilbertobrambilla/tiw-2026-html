@@ -28,25 +28,25 @@
         <div class="form-container">
             <h3>Select Task to Manage</h3>
 
-            <div th:if="${#maps.isEmpty(managerProjectsMap)}" class="empty-state-msg">
+            <div th:if="${#lists.isEmpty(projectStructuresList)}" class="empty-state-msg">
                 <p>No tasks are available for your managed projects yet.</p>
             </div>
 
-            <form th:if="${!#maps.isEmpty(managerProjectsMap)}" th:action="@{/technical/manager/home}" method="GET">
+            <form th:if="${!#lists.isEmpty(projectStructuresList)}" th:action="@{/technical/manager/home}" method="GET">
                 <div class="form-group">
                     <label>Select Task:</label>
                     <select name="taskId" required>
                         <option value="">-- Select a Task --</option>
 
-                        <th:block th:each="projEntry : ${managerProjectsMap}">
-                            <option disabled th:text="${'--- PROJECT: ' + projEntry.key.title + ' ---'}"></option>
+                        <th:block th:each="projStructure : ${projectStructuresList}">
+                            <option disabled th:text="${'--- PROJECT: ' + projStructure.project.title + ' ---'}"></option>
 
-                            <th:block th:each="wpEntry : ${projEntry.value}">
-                                <option disabled th:text="${'   └─ WP' + wpEntry.key.sequenceNumber + ': ' + wpEntry.key.title}"></option>
+                            <th:block th:each="wpWithTasks : ${projStructure.workPackages}">
+                                <option disabled th:text="${'   └─ WP' + wpWithTasks.wp.sequenceNumber + ': ' + wpWithTasks.wp.title}"></option>
 
-                                <option th:each="t : ${wpEntry.value}"
+                                <option th:each="t : ${wpWithTasks.tasks}"
                                         th:value="${t.id}"
-                                        th:text="${'      T' + wpEntry.key.sequenceNumber + '.' + t.sequenceNumber + ' - ' + t.title}"
+                                        th:text="${'      T' + wpWithTasks.wp.sequenceNumber + '.' + t.sequenceNumber + ' - ' + t.title}"
                                         th:selected="${t.id == selectedTaskId}">
                                 </option>
                             </th:block>
