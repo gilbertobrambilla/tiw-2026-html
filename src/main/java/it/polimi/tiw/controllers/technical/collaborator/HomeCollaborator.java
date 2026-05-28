@@ -155,7 +155,7 @@ public class HomeCollaborator extends HttpServlet {
 
         } catch (SQLException e) {
             // database error is handled
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database connection failure");
             return;
         }
 
