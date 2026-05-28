@@ -95,6 +95,7 @@ public class HomeCollaborator extends HttpServlet {
                     return;
                 }
 
+                // task ownership and authorization are verified
                 Project selectedProject = projectDAO.getProjectByIdAndWorker(projectId, userId);
 
                 // project authorization and correct status are validated

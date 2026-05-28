@@ -196,16 +196,17 @@ public class ProjectDAO {
         return false;
     }
 
-    public List<Project> getProjectsByManager(int managerId) throws SQLException {
+    public List<Project> getAssignedProjectsByManager(int managerId) throws SQLException {
         List<Project> projects = new ArrayList<>();
-        String query = "SELECT * FROM projects WHERE managed_by = ? ORDER BY id DESC";
+
+        String query = "SELECT * FROM projects WHERE managed_by = ? AND status = ? ORDER BY id DESC";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, managerId);
+            stmt.setString(2, ProjectStatus.assigned.name());
 
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
-                    // project bean is instantiated with full database columns including primitive user ids
                     Project project = new Project(
                             result.getInt("id"),
                             result.getString("title"),
@@ -218,6 +219,7 @@ public class ProjectDAO {
                 }
             }
         }
+
         return projects;
     }
 

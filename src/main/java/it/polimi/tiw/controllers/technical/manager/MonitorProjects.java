@@ -60,8 +60,8 @@ public class MonitorProjects extends HttpServlet {
             ProjectDAO projectDAO = new ProjectDAO(connection);
             ProjectReportDAO projectReportDAO = new ProjectReportDAO(connection);
 
-            // projects managed by the current user are retrieved
-            List<Project> managedProjects = projectDAO.getProjectsByManager(loggedInUser.getId());
+            // projects managed by the current user and currently assigned are retrieved
+            List<Project> managedProjects = projectDAO.getAssignedProjectsByManager(loggedInUser.getId());
             ctx.setVariable("managedProjects", managedProjects);
 
             String projectIdParam = request.getParameter("projectId");
@@ -81,7 +81,7 @@ public class MonitorProjects extends HttpServlet {
                 // project ownership is semantically verified
                 Project selectedProject = projectDAO.getProjectByIdAndManager(selectedProjectId, loggedInUser.getId());
 
-                if (selectedProject != null) {
+                if (selectedProject != null && selectedProject.getStatus() == ProjectStatus.assigned) {
                     ctx.setVariable("selectedProject", selectedProject);
 
                     // max months variable is injected for view rendering
@@ -96,7 +96,7 @@ public class MonitorProjects extends HttpServlet {
                     ctx.setVariable("projectReport", projectReport);
                 } else {
                     // invalid project is flagged
-                    ctx.setVariable("monitorProjectsGlobalError", "project not found or authorization denied");
+                    ctx.setVariable("monitorProjectsGlobalError", "project not found, not assigned or authorization denied");
                 }
             }
 

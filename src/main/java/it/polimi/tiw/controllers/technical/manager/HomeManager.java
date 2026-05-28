@@ -55,9 +55,17 @@ public class HomeManager extends HttpServlet {
         HttpSession session = request.getSession();
         UserLogin loggedInUser = (UserLogin) session.getAttribute("user");
 
+        // global errors from forwarded requests are transferred to context
+        boolean hasForwardedGlobalError = request.getAttribute("managerHomeGlobalError") != null;
+        if (hasForwardedGlobalError) {
+            ctx.setVariable("managerHomeGlobalError", request.getAttribute("managerHomeGlobalError"));
+        }
+
+        // request parameters are parsed
+        String taskIdParam = request.getParameter("taskId");
+
         // database connection is established
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
-            ProjectDAO projectDAO = new ProjectDAO(connection);
             WPDAO wpDAO = new WPDAO(connection);
             TaskDAO taskDAO = new TaskDAO(connection);
             UserDAO userDAO = new UserDAO(connection);
@@ -67,13 +75,24 @@ public class HomeManager extends HttpServlet {
             List<ProjectStructure> projectStructuresList = wpDAO.getProjectStructureByManager(loggedInUser.getId());
             ctx.setVariable("projectStructuresList", projectStructuresList);
 
-            String taskIdParam = request.getParameter("taskId");
             if (taskIdParam != null && !taskIdParam.trim().isEmpty()) {
-                int selectedTaskId = Integer.parseInt(taskIdParam);
+                int selectedTaskId;
 
-                // task ownership and authorization are verified semantically
+                try {
+                    selectedTaskId = Integer.parseInt(taskIdParam);
+                } catch (NumberFormatException e) {
+                    if (!hasForwardedGlobalError) {
+                        ctx.setVariable("managerHomeGlobalError", "invalid task parameter");
+                    }
+                    response.setContentType("text/html;charset=UTF-8");
+                    templateEngine.process(TEMPLATE_PATH, ctx, response.getWriter());
+                    return;
+                }
+
+                // task ownership and authorization are verified
                 Task selectedTask = taskDAO.getTaskByIdAndManager(selectedTaskId, loggedInUser.getId());
 
+                // project authorization and correct status are validated
                 if (selectedTask != null) {
                     ctx.setVariable("selectedTask", selectedTask);
                     ctx.setVariable("selectedTaskId", selectedTaskId);
@@ -89,11 +108,15 @@ public class HomeManager extends HttpServlet {
                     // existing collaborator assignments are fetched
                     List<Integer> existingCollaboratorIds = userDAO.getCollaboratorIdsByTask(selectedTaskId);
                     ctx.setVariable("existingCollaboratorIds", existingCollaboratorIds);
+                } else {
+                    if (!hasForwardedGlobalError) {
+                        ctx.setVariable("managerHomeGlobalError", "task not found or authorization denied");
+                    }
                 }
             }
 
             // request attributes for form errors are transferred to the context if present
-            String[] errorAttributes = {"formErrors", "projectGenericError", "hoursValues", "selectedCollaboratorIdsValue"};
+            String[] errorAttributes = {"formErrors", "hoursValues", "selectedCollaboratorIdsValue"};
             for (String attr : errorAttributes) {
                 if (request.getAttribute(attr) != null) {
                     ctx.setVariable(attr, request.getAttribute(attr));
