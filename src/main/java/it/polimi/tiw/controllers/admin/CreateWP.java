@@ -61,7 +61,7 @@ public class CreateWP extends HttpServlet {
             } else if (startMonth > endMonth) {
                 wpFormErrors.add("End month cannot precede start month");
             }
-        } catch (NumberFormatException | NullPointerException e) {
+        } catch (NumberFormatException e) {
             wpFormErrors.add("Valid numeric months are required");
         }
 

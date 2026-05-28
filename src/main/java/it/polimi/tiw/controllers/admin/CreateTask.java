@@ -69,7 +69,7 @@ public class CreateTask extends HttpServlet {
             } else if (startMonth > endMonth) {
                 taskFormErrors.add("End month cannot precede start month");
             }
-        } catch (NumberFormatException | NullPointerException e) {
+        } catch (NumberFormatException e) {
             taskFormErrors.add("Valid numeric months are required");
         }
 

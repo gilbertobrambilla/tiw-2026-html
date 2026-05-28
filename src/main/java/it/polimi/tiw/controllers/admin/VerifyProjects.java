@@ -86,6 +86,15 @@ public class VerifyProjects extends HttpServlet {
                 } else {
                     ctx.setVariable("verifyProjectsGlobalError", "Project not found or authorization denied");
                 }
+            } else {
+                if (projects != null && !projects.isEmpty()) {
+                    // latest project id is retrieved
+                    int latestProjectId = projects.getFirst().getId();
+
+                    // redirect is executed to update the url parameter
+                    response.sendRedirect(request.getContextPath() + "/admin/verify-projects?projectId=" + latestProjectId);
+                    return;
+                }
             }
 
         } catch (SQLException e) {
