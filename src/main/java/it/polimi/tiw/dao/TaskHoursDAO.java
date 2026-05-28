@@ -4,10 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * Data access object used for task hours management.
- */
 public class TaskHoursDAO {
     private final Connection connection;
 
@@ -78,5 +77,34 @@ public class TaskHoursDAO {
             stmt.setInt(5, hours);
             stmt.executeUpdate();
         }
+    }
+
+    public void saveExpectedHours(int taskId, int monthIndex, int hours) throws SQLException {
+        String query = "INSERT INTO task_expected_hours (task_id, month_index, hours) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE hours = ?";
+
+        // expected hours are inserted or updated on duplicate key
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.setInt(2, monthIndex);
+            stmt.setInt(3, hours);
+            stmt.setInt(4, hours);
+            stmt.executeUpdate();
+        }
+    }
+
+    public Map<Integer, Integer> getExpectedHoursByTask(int taskId) throws SQLException {
+        Map<Integer, Integer> expectedHours = new HashMap<>();
+        String query = "SELECT month_index, hours FROM task_expected_hours WHERE task_id = ? ORDER BY month_index ASC";
+
+        // monthly expected hours are extracted and mapped
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    expectedHours.put(rs.getInt("month_index"), rs.getInt("hours"));
+                }
+            }
+        }
+        return expectedHours;
     }
 }

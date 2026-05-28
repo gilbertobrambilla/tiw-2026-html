@@ -8,9 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Data access object used for task-related database operations.
- */
 public class TaskDAO {
     private final Connection connection;
 
@@ -157,5 +154,67 @@ public class TaskDAO {
             }
         }
         return null;
+    }
+
+    public void deleteWorkersByTask(int taskId) throws SQLException {
+        String query = "DELETE FROM task_workers WHERE task_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.executeUpdate();
+        }
+    }
+
+    public void addWorkerToTask(int taskId, int userId) throws SQLException {
+        String query = "INSERT INTO task_workers (task_id, user_id) VALUES (?, ?)";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.setInt(2, userId);
+            stmt.executeUpdate();
+        }
+    }
+
+    public Task getTaskByIdAndManager(int taskId, int managerId) throws SQLException {
+        // double join prevents unauthorized access to tasks belonging to other managers
+        String query = "SELECT t.* FROM tasks t " +
+                "JOIN wp w ON t.wp_id = w.id " +
+                "JOIN projects p ON w.project_id = p.id " +
+                "WHERE t.id = ? AND p.managed_by = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.setInt(2, managerId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Task(
+                            rs.getInt("id"),
+                            rs.getInt("wp_id"),
+                            rs.getInt("sequence_number"),
+                            rs.getString("title"),
+                            rs.getString("description"),
+                            rs.getInt("start_month"),
+                            rs.getInt("end_month")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    public int getProjectIdByTask(int taskId) throws SQLException {
+        // project id is extracted traversing upward the wp relationship
+        String query = "SELECT w.project_id FROM wp w JOIN tasks t ON w.id = t.wp_id WHERE t.id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("project_id");
+                }
+            }
+        }
+        return -1;
     }
 }

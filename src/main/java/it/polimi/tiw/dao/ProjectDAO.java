@@ -1,17 +1,13 @@
 package it.polimi.tiw.dao;
 
-import it.polimi.tiw.beans.Project;
-import it.polimi.tiw.beans.ProjectStatus;
+import it.polimi.tiw.beans.*;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-/**
- * Data access object used for project-related database operations.
- */
 public class ProjectDAO {
     private final Connection connection;
 
@@ -40,14 +36,13 @@ public class ProjectDAO {
 
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
-                    // inner user objects are set to null as they require separate queries or joins if needed later
                     Project project = new Project(
                             result.getInt("id"),
                             result.getString("title"),
                             result.getInt("duration_months"),
                             ProjectStatus.valueOf(result.getString("status")),
-                            null,
-                            null
+                            result.getInt("created_by"),
+                            result.getInt("managed_by")
                     );
                     projects.add(project);
                 }
@@ -70,8 +65,8 @@ public class ProjectDAO {
                             result.getString("title"),
                             result.getInt("duration_months"),
                             ProjectStatus.valueOf(result.getString("status")),
-                            null,
-                            null
+                            result.getInt("created_by"),
+                            result.getInt("managed_by")
                     );
                 }
             }
@@ -94,8 +89,8 @@ public class ProjectDAO {
                             result.getString("title"),
                             result.getInt("duration_months"),
                             status,
-                            null,
-                            null
+                            result.getInt("created_by"),
+                            result.getInt("managed_by")
                     );
                     projects.add(project);
                 }
@@ -122,7 +117,7 @@ public class ProjectDAO {
 
     public List<Project> getProjectsByWorker(int workerId) throws SQLException {
         List<Project> projects = new ArrayList<>();
-        String query = "SELECT DISTINCT p.* FROM projects p JOIN wp w ON p.id = w.project_id JOIN tasks t ON w.id = t.wp_id JOIN task_workers tw ON t.id = tw.task_id WHERE tw.user_id = ? ORDER BY p.id DESC";
+        String query = "SELECT DISTINCT p.* FROM projects p JOIN wp w ON p.id = w.project_id JOIN tasks t ON w.id = t.wp_id JOIN task_workers tw ON t.id = tw.task_id WHERE tw.user_id = ? AND p.status = 'assigned' ORDER BY p.id DESC";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, workerId);
@@ -135,8 +130,8 @@ public class ProjectDAO {
                             result.getString("title"),
                             result.getInt("duration_months"),
                             ProjectStatus.valueOf(result.getString("status")),
-                            null,
-                            null
+                            result.getInt("created_by"),
+                            result.getInt("managed_by")
                     );
                     projects.add(project);
                 }
@@ -146,13 +141,13 @@ public class ProjectDAO {
     }
 
     public Project getProjectByIdAndWorker(int projectId, int workerId) throws SQLException {
-        String query = "SELECT DISTINCT p.* FROM projects p JOIN wp w ON p.id = w.project_id JOIN tasks t ON w.id = t.wp_id JOIN task_workers tw ON t.id = tw.task_id WHERE p.id = ? AND tw.user_id = ?";
+        String query = "SELECT DISTINCT p.* FROM projects p JOIN wp w ON p.id = w.project_id JOIN tasks t ON w.id = t.wp_id JOIN task_workers tw ON t.id = tw.task_id WHERE p.id = ? AND tw.user_id = ? AND p.status = 'assigned'";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, projectId);
             stmt.setInt(2, workerId);
 
-            // worker assignment to the specific project is verified
+            // worker assignment to the specific assigned project is verified
             try (ResultSet result = stmt.executeQuery()) {
                 if (result.next()) {
                     return new Project(
@@ -160,8 +155,89 @@ public class ProjectDAO {
                             result.getString("title"),
                             result.getInt("duration_months"),
                             ProjectStatus.valueOf(result.getString("status")),
-                            null,
-                            null
+                            result.getInt("created_by"),
+                            result.getInt("managed_by")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    public void updateProjectStatus(int projectId, ProjectStatus status) throws SQLException {
+        String query = "UPDATE projects SET status = ? WHERE id = ?";
+
+        // project status is updated in the database
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, status.name().toLowerCase());
+            stmt.setInt(2, projectId);
+            stmt.executeUpdate();
+        }
+    }
+
+    public boolean isProjectAssignable(int projectId) throws SQLException {
+        // blocking issues are counted checking for missing workers or incomplete monthly hours
+        String query = "SELECT COUNT(*) AS blocking_issues_count FROM tasks t " +
+                "JOIN wp w ON t.wp_id = w.id " +
+                "WHERE w.project_id = ? AND (" +
+                "NOT EXISTS (SELECT 1 FROM task_workers tw WHERE tw.task_id = t.id) OR " +
+                "(SELECT COUNT(*) FROM task_expected_hours teh WHERE teh.task_id = t.id) < (t.end_month - t.start_month + 1))";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, projectId);
+
+            try (ResultSet result = stmt.executeQuery()) {
+                if (result.next()) {
+                    // true is returned if zero blocking issues are found
+                    return result.getInt("blocking_issues_count") == 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    public List<Project> getProjectsByManager(int managerId) throws SQLException {
+        List<Project> projects = new ArrayList<>();
+        String query = "SELECT * FROM projects WHERE managed_by = ? ORDER BY id DESC";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, managerId);
+
+            try (ResultSet result = stmt.executeQuery()) {
+                while (result.next()) {
+                    // project bean is instantiated with full database columns including primitive user ids
+                    Project project = new Project(
+                            result.getInt("id"),
+                            result.getString("title"),
+                            result.getInt("duration_months"),
+                            ProjectStatus.valueOf(result.getString("status")),
+                            result.getInt("created_by"),
+                            result.getInt("managed_by")
+                    );
+                    projects.add(project);
+                }
+            }
+        }
+        return projects;
+    }
+
+    public Project getProjectByIdAndManager(int projectId, int managerId) throws SQLException {
+        String query = "SELECT * FROM projects WHERE id = ? AND managed_by = ?";
+
+        // project ownership is verified directly in the query
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, projectId);
+            stmt.setInt(2, managerId);
+
+            try (ResultSet result = stmt.executeQuery()) {
+                if (result.next()) {
+                    return new Project(
+                            result.getInt("id"),
+                            result.getString("title"),
+                            result.getInt("duration_months"),
+                            ProjectStatus.valueOf(result.getString("status")),
+                            result.getInt("created_by"),
+                            result.getInt("managed_by")
                     );
                 }
             }

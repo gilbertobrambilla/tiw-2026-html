@@ -1,8 +1,6 @@
 package it.polimi.tiw.dao;
 
-import it.polimi.tiw.beans.Project;
-import it.polimi.tiw.beans.ProjectStatus;
-import it.polimi.tiw.beans.WP;
+import it.polimi.tiw.beans.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,9 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Data access object used for work-package-related database operations.
- */
 public class WPDAO {
     private final Connection connection;
 
@@ -100,11 +95,11 @@ public class WPDAO {
     }
 
     public Map<Project, List<WP>> getWPGroupedByProject(int creatorId) throws SQLException {
-        // LinkedHashMap is crucial here to preserve the SQL ORDER BY arrangement
+        // linked hash map is used to preserve the sql order
         Map<Project, List<WP>> groupedWPs = new LinkedHashMap<>();
 
-        // Joining projects and wp, filtering by creator and 'created' status
-        String query = "SELECT p.id AS p_id, p.title AS p_title, p.duration_months, p.status, " +
+        // project columns are added to selection
+        String query = "SELECT p.id AS p_id, p.title AS p_title, p.duration_months, p.status, p.created_by, p.managed_by, " +
                 "wp.id AS wp_id, wp.sequence_number, wp.title AS wp_title, wp.start_month, wp.end_month " +
                 "FROM projects p " +
                 "JOIN wp ON p.id = wp.project_id " +
@@ -121,21 +116,21 @@ public class WPDAO {
                 while (result.next()) {
                     int projectId = result.getInt("p_id");
 
-                    // If it's a new project, create the Project bean and add it to the map
+                    // project is instantiated when id changes
                     if (currentProject == null || currentProject.getId() != projectId) {
                         currentProject = new Project(
                                 projectId,
                                 result.getString("p_title"),
                                 result.getInt("duration_months"),
                                 ProjectStatus.valueOf(result.getString("status")),
-                                null,
-                                null
+                                result.getInt("created_by"),
+                                result.getInt("managed_by")
                         );
                         currentWpList = new ArrayList<>();
                         groupedWPs.put(currentProject, currentWpList);
                     }
 
-                    // Create the WP bean and add it to the current project's list
+                    // wp bean is instantiated and added to the list
                     WP wp = new WP(
                             result.getInt("wp_id"),
                             projectId,
@@ -175,5 +170,78 @@ public class WPDAO {
             }
         }
         return wpList;
+    }
+
+    public List<ProjectStructure> getProjectStructureByManager(int managerId) throws SQLException {
+        List<ProjectStructure> structure = new ArrayList<>();
+        String query = "SELECT p.id AS p_id, p.title AS p_title, p.duration_months, p.status, p.created_by, p.managed_by, " +
+                "w.id AS w_id, w.sequence_number AS w_seq, w.title AS w_title, w.start_month AS w_start, w.end_month AS w_end, " +
+                "t.id AS t_id, t.sequence_number AS t_seq, t.title AS t_title, t.description, t.start_month AS t_start, t.end_month AS t_end " +
+                "FROM projects p " +
+                "JOIN wp w ON p.id = w.project_id " +
+                "JOIN tasks t ON w.id = t.wp_id " +
+                "WHERE p.managed_by = ? AND p.status = 'created' " +
+                "ORDER BY p.id DESC, w.sequence_number ASC, t.sequence_number ASC";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, managerId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                Project currentProject = null;
+                List<WPWithTasks> currentWpList = null;
+                WP currentWp = null;
+                List<Task> currentTaskList = null;
+
+                while (rs.next()) {
+                    int projectId = rs.getInt("p_id");
+                    int wpId = rs.getInt("w_id");
+
+                    // project is instantiated when id changes
+                    if (currentProject == null || currentProject.getId() != projectId) {
+                        currentProject = new Project(
+                                projectId,
+                                rs.getString("p_title"),
+                                rs.getInt("duration_months"),
+                                ProjectStatus.valueOf(rs.getString("status")),
+                                rs.getInt("created_by"),
+                                rs.getInt("managed_by")
+                        );
+                        currentWpList = new ArrayList<>();
+                        structure.add(new ProjectStructure(currentProject, currentWpList));
+                    }
+
+                    // wp data is instantiated when id changes
+                    if (currentWp == null || currentWp.getId() != wpId) {
+                        currentWp = new WP(
+                                wpId,
+                                projectId,
+                                rs.getInt("w_seq"),
+                                rs.getString("w_title"),
+                                rs.getInt("w_start"),
+                                rs.getInt("w_end")
+                        );
+                        currentTaskList = new ArrayList<>();
+                        if (currentWpList != null) {
+                            currentWpList.add(new WPWithTasks(currentWp, currentTaskList));
+                        }
+                    }
+
+                    // task is added to the list
+                    Task task = new Task(
+                            rs.getInt("t_id"),
+                            wpId,
+                            rs.getInt("t_seq"),
+                            rs.getString("t_title"),
+                            rs.getString("description"),
+                            rs.getInt("t_start"),
+                            rs.getInt("t_end")
+                    );
+                    if (currentTaskList != null) {
+                        currentTaskList.add(task);
+                    }
+                }
+            }
+        }
+        return structure;
     }
 }
