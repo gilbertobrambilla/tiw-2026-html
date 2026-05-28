@@ -1,13 +1,11 @@
 package it.polimi.tiw.controllers.technical;
 
-import it.polimi.tiw.beans.UserLogin;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
@@ -41,10 +39,6 @@ public class HomeTechnical extends HttpServlet {
         // thymeleaf web application context is initialized
         JakartaServletWebApplication webApplication = JakartaServletWebApplication.buildApplication(getServletContext());
         WebContext ctx = new WebContext(webApplication.buildExchange(request, response), request.getLocale());
-
-        // session and user details are retrieved
-        HttpSession session = request.getSession();
-        UserLogin loggedInUser = (UserLogin) session.getAttribute("user");
 
         // response content type is set and template is processed
         response.setContentType("text/html;charset=UTF-8");

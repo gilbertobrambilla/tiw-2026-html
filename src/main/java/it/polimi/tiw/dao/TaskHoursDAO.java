@@ -66,29 +66,75 @@ public class TaskHoursDAO {
     }
 
     public void saveWorkedHours(int taskId, int userId, int monthIndex, int hours) throws SQLException {
-        String query = "INSERT INTO task_worked_hours (task_id, user_id, month_index, hours) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE hours = ?";
+        String selectQuery = "SELECT * FROM task_worked_hours WHERE task_id = ? AND user_id = ? AND month_index = ?";
+        boolean existingWorkedHours;
 
-        // worked hours are inserted or updated if already existing
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+        // existing worked-hours row is checked
+        try (PreparedStatement stmt = connection.prepareStatement(selectQuery)) {
             stmt.setInt(1, taskId);
             stmt.setInt(2, userId);
             stmt.setInt(3, monthIndex);
-            stmt.setInt(4, hours);
-            stmt.setInt(5, hours);
-            stmt.executeUpdate();
+
+            try (ResultSet result = stmt.executeQuery()) {
+                existingWorkedHours = result.next();
+            }
+        }
+
+        if (existingWorkedHours) {
+            String updateQuery = "UPDATE task_worked_hours SET hours = ? WHERE task_id = ? AND user_id = ? AND month_index = ?";
+
+            try (PreparedStatement stmt = connection.prepareStatement(updateQuery)) {
+                stmt.setInt(1, hours);
+                stmt.setInt(2, taskId);
+                stmt.setInt(3, userId);
+                stmt.setInt(4, monthIndex);
+                stmt.executeUpdate();
+            }
+        } else {
+            String insertQuery = "INSERT INTO task_worked_hours (task_id, user_id, month_index, hours) VALUES (?, ?, ?, ?)";
+
+            try (PreparedStatement stmt = connection.prepareStatement(insertQuery)) {
+                stmt.setInt(1, taskId);
+                stmt.setInt(2, userId);
+                stmt.setInt(3, monthIndex);
+                stmt.setInt(4, hours);
+                stmt.executeUpdate();
+            }
         }
     }
 
     public void saveExpectedHours(int taskId, int monthIndex, int hours) throws SQLException {
-        String query = "INSERT INTO task_expected_hours (task_id, month_index, hours) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE hours = ?";
+        String selectQuery = "SELECT * FROM task_expected_hours WHERE task_id = ? AND month_index = ?";
+        boolean existingExpectedHours;
 
-        // expected hours are inserted or updated on duplicate key
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+        // existing expected-hours row is checked
+        try (PreparedStatement stmt = connection.prepareStatement(selectQuery)) {
             stmt.setInt(1, taskId);
             stmt.setInt(2, monthIndex);
-            stmt.setInt(3, hours);
-            stmt.setInt(4, hours);
-            stmt.executeUpdate();
+
+            try (ResultSet result = stmt.executeQuery()) {
+                existingExpectedHours = result.next();
+            }
+        }
+
+        if (existingExpectedHours) {
+            String updateQuery = "UPDATE task_expected_hours SET hours = ? WHERE task_id = ? AND month_index = ?";
+
+            try (PreparedStatement stmt = connection.prepareStatement(updateQuery)) {
+                stmt.setInt(1, hours);
+                stmt.setInt(2, taskId);
+                stmt.setInt(3, monthIndex);
+                stmt.executeUpdate();
+            }
+        } else {
+            String insertQuery = "INSERT INTO task_expected_hours (task_id, month_index, hours) VALUES (?, ?, ?)";
+
+            try (PreparedStatement stmt = connection.prepareStatement(insertQuery)) {
+                stmt.setInt(1, taskId);
+                stmt.setInt(2, monthIndex);
+                stmt.setInt(3, hours);
+                stmt.executeUpdate();
+            }
         }
     }
 

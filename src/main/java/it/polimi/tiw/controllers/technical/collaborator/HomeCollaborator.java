@@ -61,7 +61,8 @@ public class HomeCollaborator extends HttpServlet {
         int userId = loggedInUser.getId();
 
         // global errors from forwarded requests are transferred to context
-        if (request.getAttribute("homeCollaboratorGlobalError") != null) {
+        boolean hasForwardedGlobalError = request.getAttribute("homeCollaboratorGlobalError") != null;
+        if (hasForwardedGlobalError) {
             ctx.setVariable("homeCollaboratorGlobalError", request.getAttribute("homeCollaboratorGlobalError"));
         }
 
@@ -86,7 +87,9 @@ public class HomeCollaborator extends HttpServlet {
                 try {
                     projectId = Integer.parseInt(projectIdParam);
                 } catch (NumberFormatException e) {
-                    ctx.setVariable("homeCollaboratorGlobalError", "invalid project parameter");
+                    if (!hasForwardedGlobalError) {
+                        ctx.setVariable("homeCollaboratorGlobalError", "invalid project parameter");
+                    }
                     response.setContentType("text/html;charset=UTF-8");
                     templateEngine.process(TEMPLATE_PATH, ctx, response.getWriter());
                     return;
@@ -116,7 +119,9 @@ public class HomeCollaborator extends HttpServlet {
                         try {
                             taskId = Integer.parseInt(taskIdParam);
                         } catch (NumberFormatException e) {
-                            ctx.setVariable("homeCollaboratorGlobalError", "invalid task parameter");
+                            if (!hasForwardedGlobalError) {
+                                ctx.setVariable("homeCollaboratorGlobalError", "invalid task parameter");
+                            }
                             response.setContentType("text/html;charset=UTF-8");
                             templateEngine.process(TEMPLATE_PATH, ctx, response.getWriter());
                             return;
@@ -144,12 +149,16 @@ public class HomeCollaborator extends HttpServlet {
                             }
                         } else {
                             // invalid coherent pair is flagged
-                            ctx.setVariable("homeCollaboratorGlobalError", "invalid task selection for this project");
+                            if (!hasForwardedGlobalError) {
+                                ctx.setVariable("homeCollaboratorGlobalError", "invalid task selection for this project");
+                            }
                         }
                     }
                 } else {
                     // invalid project is flagged
-                    ctx.setVariable("homeCollaboratorGlobalError", "project not accessible or not assigned");
+                    if (!hasForwardedGlobalError) {
+                        ctx.setVariable("homeCollaboratorGlobalError", "project not accessible or not assigned");
+                    }
                 }
             }
 
