@@ -168,11 +168,19 @@ public class UserDAO {
         return users;
     }
 
-    public User getUserById(int userId) throws SQLException {
-        String query = "SELECT id, username, first_name, last_name FROM users WHERE id = ?";
+    public User getCollaboratorByIdAndManager(int collaboratorId, int managerId) throws SQLException {
+        String query = "SELECT DISTINCT u.id, u.username, u.first_name, u.last_name " +
+                "FROM users u " +
+                "JOIN task_workers tw ON u.id = tw.user_id " +
+                "JOIN tasks t ON tw.task_id = t.id " +
+                "JOIN wp w ON t.wp_id = w.id " +
+                "JOIN projects p ON w.project_id = p.id " +
+                "WHERE u.id = ? AND p.managed_by = ? AND u.role = 'technical' AND u.id <> ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, userId);
+            stmt.setInt(1, collaboratorId);
+            stmt.setInt(2, managerId);
+            stmt.setInt(3, managerId);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {

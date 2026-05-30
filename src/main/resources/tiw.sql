@@ -177,106 +177,153 @@ FROM projects p
 
 
 
+-- ============================================================================
+-- 1. USERS
+-- ============================================================================
 
--- ============================================================================
--- 1. UTENTI (Già forniti da te, li rimetto per completezza dello script)
--- ============================================================================
 INSERT INTO `users` (`id`, `username`, `first_name`, `last_name`, `password`, `role`) VALUES
-                                                                                          (1, 'admin1', 'admin1', 'cogn', '123', 'admin'),
-                                                                                          (2, 'admin2', 'admin2', 'cogn', '123', 'admin'),
-                                                                                          (3, 'tech1', 'tech1', 'cogn', '123', 'technical'),
-                                                                                          (4, 'tech2', 'tech2', 'cogn', '123', 'technical');
+(1, 'admin1', 'Anna', 'Rossi', '123', 'admin'),
+(2, 'admin2', 'Bruno', 'Bianchi', '123', 'admin'),
+(6, 'admin3', 'Chiara', 'Conti', '123', 'admin'),
+(3, 'tech1', 'Marco', 'Verdi', '123', 'technical'),
+(4, 'tech2', 'Laura', 'Neri', '123', 'technical'),
+(5, 'tech3', 'Giulia', 'Gallo', '123', 'technical');
 
 -- ============================================================================
--- 2. PROGETTI
+-- 2. PROJECTS
 -- ============================================================================
+
 INSERT INTO `projects` (`id`, `title`, `duration_months`, `status`, `created_by`, `managed_by`) VALUES
-                                                                                                    (1, 'Sistema ERP Operativo', 6, 'assigned', 1, 3), -- Progetto 1: Vivo e assegnato
-                                                                                                    (2, 'Sito Web Incompleto', 4, 'created', 2, 4),    -- Progetto 2: Incompleto, per testare i blocchi
-                                                                                                    (3, 'App Mobile Storica', 3, 'completed', 1, 3);  -- Progetto 3: Concluso, per report in sola lettura
+(1, 'Sistema ERP Operativo', 6, 'assigned', 1, 3),
+(2, 'Portale Fornitori', 4, 'created', 2, 4),
+(3, 'App Mobile Storica', 3, 'completed', 1, 3),
+(4, 'Progetto Appena Nato', 12, 'created', 1, 3),
+(5, 'Analisi Dati Rendicontazione', 5, 'assigned', 1, 3),
+(6, 'Intranet Servizi Interni', 4, 'assigned', 2, 4);
 
 -- ============================================================================
--- 3. WORK PACKAGES (WP)
+-- 3. WORK PACKAGES
 -- ============================================================================
+
 INSERT INTO `wp` (`id`, `project_id`, `sequence_number`, `title`, `start_month`, `end_month`) VALUES
--- Progetto 1 (6 mesi)
 (1, 1, 1, 'Analisi e Design', 1, 3),
 (2, 1, 2, 'Sviluppo Backend', 4, 6),
--- Progetto 2 (4 mesi)
+
 (3, 2, 1, 'Setup Infrastruttura', 1, 4),
--- Progetto 3 (3 mesi)
-(4, 3, 1, 'Bug Fixing Generale', 1, 3);
+(5, 2, 2, 'Pianificazione Vuota', 2, 4),
+
+(4, 3, 1, 'Bug Fixing Generale', 1, 3),
+
+(6, 5, 1, 'Raccolta e Pulizia Dati', 1, 3),
+(7, 5, 2, 'Dashboard e Consegna', 3, 5),
+
+(8, 6, 1, 'Servizi Applicativi', 1, 4);
 
 -- ============================================================================
 -- 4. TASKS
 -- ============================================================================
+
 INSERT INTO `tasks` (`id`, `wp_id`, `sequence_number`, `title`, `description`, `start_month`, `end_month`) VALUES
--- Progetto 1 -> WP 1
 (1, 1, 1, 'Raccolta requisiti', 'Interviste con il cliente', 1, 2),
 (2, 1, 2, 'Progettazione DB', 'Schema ER e logico', 2, 3),
--- Progetto 1 -> WP 2
-(3, 2, 1, 'API Rest', 'Sviluppo endpoint principali', 4, 5),
--- Progetto 2 -> WP 3
+(3, 2, 1, 'API REST', 'Sviluppo endpoint principali', 4, 5),
+
 (4, 3, 1, 'Configurazione server', 'Setup macchina Linux', 1, 2),
-(5, 3, 2, 'Setup CI/CD', 'Pipeline su GitHub Actions', 3, 4),
--- Progetto 3 -> WP 4
-(6, 4, 1, 'Fix UI Login', 'Risoluzione glitch visivo', 1, 3);
+(5, 3, 2, 'Pipeline CI/CD', 'Pipeline di build e deploy', 3, 4),
+
+(6, 4, 1, 'Fix UI Login', 'Risoluzione glitch visivo', 1, 3),
+
+(7, 6, 1, 'Import dataset', 'Importazione dei dati sorgente', 1, 2),
+(8, 6, 2, 'Pulizia dati', 'Normalizzazione e controllo qualità', 2, 3),
+(9, 7, 1, 'Report finale', 'Produzione dashboard e report conclusivo', 3, 5),
+
+(10, 8, 1, 'Catalogo servizi', 'Implementazione del catalogo interno', 1, 2),
+(11, 8, 2, 'Notifiche interne', 'Gestione notifiche operative', 3, 4);
 
 -- ============================================================================
--- 5. ASSEGNAZIONE COLLABORATORI (task_workers)
+-- 5. TASK WORKERS
 -- ============================================================================
+
 INSERT INTO `task_workers` (`task_id`, `user_id`) VALUES
-                                                      (1, 4),       -- Task 1.1 assegnato a tech2
-                                                      (2, 3),       -- Task 1.2 assegnato a tech1 (manager che fa anche il collaboratore)
-                                                      (2, 4),       -- Task 1.2 assegnato anche a tech2 (più collaboratori)
-                                                      (3, 4),       -- Task 2.1 assegnato a tech2
--- Nota: I task 4 e 5 del Progetto 2 NON hanno collaboratori per testare il blocco
-                                                      (6, 4);       -- Task 1.1 (Proj 3) assegnato a tech2
+-- Sistema ERP Operativo, manager tech1, collaboratori tech2 e tech3
+(1, 4),
+(2, 4),
+(2, 5),
+(3, 4),
+
+-- App Mobile Storica, manager tech1, collaboratore tech2
+(6, 4),
+
+-- Analisi Dati Rendicontazione, manager tech1, collaboratori tech2 e tech3
+(7, 4),
+(7, 5),
+(8, 4),
+(9, 4),
+
+-- Intranet Servizi Interni, manager tech2, collaboratori tech1 e tech3
+(10, 3),
+(11, 5);
 
 -- ============================================================================
--- 6. ORE PREVISTE (task_expected_hours)
+-- 6. EXPECTED HOURS
 -- ============================================================================
+
 INSERT INTO `task_expected_hours` (`task_id`, `month_index`, `hours`) VALUES
--- Task 1 (M1-M2)
+-- Sistema ERP Operativo: progetto assegnato ma non ancora chiudibile
 (1, 1, 10),
 (1, 2, 10),
--- Task 2 (M2-M3)
 (2, 2, 5),
 (2, 3, 5),
--- Task 3 (M4-M5) -> M5 lasciato deliberatamente a 0
 (3, 4, 15),
 (3, 5, 0),
--- Task 5 (M3-M4) -> Progetto 2, ha le ore ma non i workers
+
+-- Portale Fornitori: progetto created con dati ancora incompleti
 (5, 3, 8),
 (5, 4, 8),
--- Task 6 (M1-M3) -> Progetto concluso
+
+-- App Mobile Storica: progetto concluso
 (6, 1, 20),
 (6, 2, 20),
-(6, 3, 20);
+(6, 3, 20),
+
+-- Analisi Dati Rendicontazione: progetto assegnato e chiudibile
+(7, 1, 5),
+(7, 2, 5),
+(8, 2, 4),
+(8, 3, 4),
+(9, 3, 3),
+(9, 4, 3),
+(9, 5, 4),
+
+-- Intranet Servizi Interni: progetto assegnato ma non chiudibile
+(10, 1, 6),
+(10, 2, 6),
+(11, 3, 7),
+(11, 4, 7);
 
 -- ============================================================================
--- 7. ORE LAVORATE (task_worked_hours)
+-- 7. WORKED HOURS
 -- ============================================================================
+
 INSERT INTO `task_worked_hours` (`task_id`, `user_id`, `month_index`, `hours`) VALUES
--- Progetto 1
-(1, 4, 1, 12), -- tech2 lavora 12h (più delle 10 previste). M2 è a zero, impedisce la chiusura.
-(2, 3, 2, 2),  -- tech1 lavora 2h
-(2, 4, 2, 3),  -- tech2 lavora 3h nello stesso mese/task
--- Progetto 3 (Concluso: ore lavorate >= previste in tutti i mesi)
+-- Sistema ERP Operativo: ore insufficienti per la conclusione
+(1, 4, 1, 12),
+(2, 4, 2, 3),
+(2, 5, 2, 2),
+
+-- App Mobile Storica: ore lavorate sufficienti
 (6, 4, 1, 20),
 (6, 4, 2, 20),
-(6, 4, 3, 25); -- Supera leggermente per realismo
+(6, 4, 3, 25),
 
--- ============================================================================
--- 8. CORNER CASES: EMPTY STATES
--- ============================================================================
+-- Analisi Dati Rendicontazione: ore lavorate sufficienti per mostrare CONCLUDI
+(7, 4, 1, 6),
+(7, 4, 2, 5),
+(8, 4, 2, 4),
+(8, 4, 3, 4),
+(9, 4, 3, 3),
+(9, 4, 4, 3),
+(9, 4, 5, 4),
 
--- Aggiungiamo il Progetto 4: Totalmente vuoto (Nessun WP associato)
--- Stato 'created', creato da admin1, assegnato a tech1
-INSERT INTO `projects` (`id`, `title`, `duration_months`, `status`, `created_by`, `managed_by`) VALUES
-    (4, 'Progetto Appena Nato (Vuoto)', 12, 'created', 1, 3);
-
--- Aggiungiamo il WP 5: Un Work Package vuoto (Nessun Task associato)
--- Lo inseriamo all'interno del Progetto 2 (Sito Web Incompleto) creato da admin2
-INSERT INTO `wp` (`id`, `project_id`, `sequence_number`, `title`, `start_month`, `end_month`) VALUES
-    (5, 2, 2, 'WP Senza Task', 2, 4);
+-- Intranet Servizi Interni: ore parziali
+(10, 3, 1, 6);

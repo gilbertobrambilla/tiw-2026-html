@@ -19,11 +19,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Servlet used for rendering the project monitoring page.
- */
 @WebServlet("/technical/manager/monitor-projects")
 public class MonitorProjects extends HttpServlet {
     private TemplateEngine templateEngine;
@@ -60,15 +56,13 @@ public class MonitorProjects extends HttpServlet {
             ProjectDAO projectDAO = new ProjectDAO(connection);
             ProjectReportDAO projectReportDAO = new ProjectReportDAO(connection);
 
-            // projects managed by the current user and currently assigned are retrieved
-            List<Project> managedProjects = projectDAO.getAssignedProjectsByManager(loggedInUser.getId());
+            List<Project> managedProjects = projectDAO.getAssignedAndCompletedProjectsByManager(loggedInUser.getId());
             ctx.setVariable("managedProjects", managedProjects);
 
             String projectIdParam = request.getParameter("projectId");
             if (projectIdParam != null && !projectIdParam.trim().isEmpty()) {
                 int selectedProjectId;
 
-                // syntax check for identifier is performed
                 try {
                     selectedProjectId = Integer.parseInt(projectIdParam);
                 } catch (NumberFormatException e) {
@@ -78,25 +72,28 @@ public class MonitorProjects extends HttpServlet {
                     return;
                 }
 
-                // project ownership is semantically verified
                 Project selectedProject = projectDAO.getProjectByIdAndManager(selectedProjectId, loggedInUser.getId());
+                boolean isMonitorable = selectedProject != null &&
+                        (selectedProject.getStatus() == ProjectStatus.assigned ||
+                                selectedProject.getStatus() == ProjectStatus.completed);
 
-                if (selectedProject != null && selectedProject.getStatus() == ProjectStatus.assigned) {
+                if (isMonitorable) {
                     ctx.setVariable("selectedProject", selectedProject);
 
                     // max months variable is injected for view rendering
                     ctx.setVariable("maxMonths", selectedProject.getDurationMonths());
 
-                    // closable status is verified dynamically
-                    boolean isClosable = projectDAO.isProjectClosable(selectedProjectId);
+                    boolean selectedProjectCompleted = selectedProject.getStatus() == ProjectStatus.completed;
+                    ctx.setVariable("selectedProjectCompleted", selectedProjectCompleted);
+
+                    boolean isClosable = selectedProject.getStatus() == ProjectStatus.assigned &&
+                            projectDAO.isProjectClosable(selectedProjectId);
                     ctx.setVariable("isClosable", isClosable);
 
-                    // monthly report bean is loaded for the selected project
                     ProjectMonthlyReport projectReport = projectReportDAO.getProjectMonthlyReport(selectedProject, isClosable);
                     ctx.setVariable("projectReport", projectReport);
                 } else {
-                    // invalid project is flagged
-                    ctx.setVariable("monitorProjectsGlobalError", "project not found, not assigned or authorization denied");
+                    ctx.setVariable("monitorProjectsGlobalError", "project not found, not monitorable or authorization denied");
                 }
             }
 
@@ -104,6 +101,7 @@ public class MonitorProjects extends HttpServlet {
             if (request.getAttribute("monitorProjectsGlobalError") != null) {
                 ctx.setVariable("monitorProjectsGlobalError", request.getAttribute("monitorProjectsGlobalError"));
             }
+
             if (request.getAttribute("formErrors") != null) {
                 ctx.setVariable("formErrors", request.getAttribute("formErrors"));
             }

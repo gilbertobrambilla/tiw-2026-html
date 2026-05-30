@@ -19,11 +19,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Servlet used for rendering the collaborator monitoring page.
- */
 @WebServlet("/technical/manager/monitor-collaborators")
 public class MonitorCollaborators extends HttpServlet {
     private TemplateEngine templateEngine;
@@ -67,10 +63,20 @@ public class MonitorCollaborators extends HttpServlet {
             // request parameters are parsed
             String collabIdParam = request.getParameter("collaboratorId");
             if (collabIdParam != null && !collabIdParam.trim().isEmpty()) {
-                int collaboratorId = Integer.parseInt(collabIdParam);
+                int collaboratorId;
 
-                // collaborator entity is fetched
-                User selectedCollaborator = userDAO.getUserById(collaboratorId);
+                // syntax check for identifier is performed
+                try {
+                    collaboratorId = Integer.parseInt(collabIdParam);
+                } catch (NumberFormatException e) {
+                    ctx.setVariable("monitorCollaboratorsGlobalError", "invalid collaborator parameter");
+                    response.setContentType("text/html;charset=UTF-8");
+                    templateEngine.process(TEMPLATE_PATH, ctx, response.getWriter());
+                    return;
+                }
+
+                // collaborator access is verified
+                User selectedCollaborator = userDAO.getCollaboratorByIdAndManager(collaboratorId, loggedInUser.getId());
 
                 if (selectedCollaborator != null) {
                     ctx.setVariable("selectedCollaborator", selectedCollaborator);
@@ -79,15 +85,9 @@ public class MonitorCollaborators extends HttpServlet {
                     List<ProjectMonthlyReport> collaboratorReportList =
                             projectReportDAO.getCollaboratorMonthlyReportByManagerAndCollaborator(loggedInUser.getId(), collaboratorId);
                     ctx.setVariable("collaboratorReportList", collaboratorReportList);
-
-                    // dynamic table scaling logic is calculated based on project durations
-                    int maxMonths = 0;
-                    for (ProjectMonthlyReport report : collaboratorReportList) {
-                        if (report.getProject().getDurationMonths() > maxMonths) {
-                            maxMonths = report.getProject().getDurationMonths();
-                        }
-                    }
-                    ctx.setVariable("maxMonths", maxMonths);
+                } else {
+                    // invalid collaborator is flagged
+                    ctx.setVariable("monitorCollaboratorsGlobalError", "collaborator not found, not assigned or authorization denied");
                 }
             }
 

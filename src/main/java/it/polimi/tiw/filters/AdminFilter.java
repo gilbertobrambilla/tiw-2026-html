@@ -8,9 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
-/**
- * Filter intercepting requests to administrative endpoints to ensure proper authorization.
- */
 public class AdminFilter implements Filter {
 
     @Override

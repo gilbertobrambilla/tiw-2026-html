@@ -13,10 +13,9 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Servlet used for processing the project conclusion action.
- */
 @WebServlet("/technical/manager/conclude-project")
 public class ConcludeProject extends HttpServlet {
 
@@ -64,14 +63,19 @@ public class ConcludeProject extends HttpServlet {
                 return;
             }
 
-            // project closable condition is verified
+            // project-closable condition is verified
             if (projectDAO.isProjectClosable(projectId)) {
                 projectDAO.updateProjectStatus(projectId, ProjectStatus.completed);
-                response.sendRedirect(request.getContextPath() + "/technical/manager/monitor-projects");
-            } else {
-                request.setAttribute("monitorProjectsGlobalError", "Project cannot be concluded yet due to missing worked hours");
-                request.getRequestDispatcher("/technical/manager/monitor-projects").forward(request, response);
+
+                response.sendRedirect(request.getContextPath() + "/technical/manager/monitor-projects?projectId=" + projectId);
+                return;
             }
+
+            List<String> formErrors = new ArrayList<>();
+            formErrors.add("Project cannot be concluded yet due to missing worked hours");
+
+            request.setAttribute("formErrors", formErrors);
+            request.getRequestDispatcher("/technical/manager/monitor-projects").forward(request, response);
 
         } catch (SQLException e) {
             // database error is handled

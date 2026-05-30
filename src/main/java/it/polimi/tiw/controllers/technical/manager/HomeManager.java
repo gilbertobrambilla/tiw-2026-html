@@ -21,9 +21,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Controller used for rendering the manager home page.
- */
 @WebServlet("/technical/manager/home")
 public class HomeManager extends HttpServlet {
     private TemplateEngine templateEngine;
@@ -66,6 +63,7 @@ public class HomeManager extends HttpServlet {
 
         // database connection is established
         try (Connection connection = DatabaseConnection.getInstance(getServletContext()).getConnection()) {
+            ProjectDAO projectDAO = new ProjectDAO(connection);
             WPDAO wpDAO = new WPDAO(connection);
             TaskDAO taskDAO = new TaskDAO(connection);
             UserDAO userDAO = new UserDAO(connection);
@@ -89,11 +87,22 @@ public class HomeManager extends HttpServlet {
                     return;
                 }
 
-                // task ownership and authorization are verified
-                Task selectedTask = taskDAO.getTaskByIdAndManager(selectedTaskId, loggedInUser.getId());
+                // selected task is loaded only for created projects
+                Task selectedTask = taskDAO.getTaskByIdAndManagerAndProjectStatus(
+                        selectedTaskId,
+                        loggedInUser.getId(),
+                        ProjectStatus.created
+                );
 
                 // project authorization and correct status are validated
                 if (selectedTask != null) {
+                    Project selectedProject = projectDAO.getProjectByTaskIdAndManagerAndStatus(
+                            selectedTaskId,
+                            loggedInUser.getId(),
+                            ProjectStatus.created
+                    );
+
+                    ctx.setVariable("selectedProject", selectedProject);
                     ctx.setVariable("selectedTask", selectedTask);
                     ctx.setVariable("selectedTaskId", selectedTaskId);
 
@@ -110,7 +119,7 @@ public class HomeManager extends HttpServlet {
                     ctx.setVariable("existingCollaboratorIds", existingCollaboratorIds);
                 } else {
                     if (!hasForwardedGlobalError) {
-                        ctx.setVariable("managerHomeGlobalError", "task not found or authorization denied");
+                        ctx.setVariable("managerHomeGlobalError", "task not found, not editable or authorization denied");
                     }
                 }
             }

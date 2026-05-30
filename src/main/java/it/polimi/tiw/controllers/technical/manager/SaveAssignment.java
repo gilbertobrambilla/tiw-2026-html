@@ -18,9 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Servlet used for processing task hours and collaborator assignments.
- */
 @WebServlet("/technical/manager/save-assignment")
 public class SaveAssignment extends HttpServlet {
 
@@ -35,10 +32,18 @@ public class SaveAssignment extends HttpServlet {
         String action = request.getParameter("action");
 
         // syntax checks for identifiers are performed
-        if (taskIdParam == null || taskIdParam.trim().isEmpty() || action == null || action.trim().isEmpty()) {
-            request.setAttribute("managerHomeGlobalError", "Missing mandatory parameters");
+        if (taskIdParam == null || taskIdParam.trim().isEmpty()) {
+            request.setAttribute("managerHomeGlobalError", "Missing task parameter");
             request.getRequestDispatcher("/technical/manager/home").forward(request, response);
             return;
+        }
+
+        List<String> formErrors = new ArrayList<>();
+        Map<Integer, Integer> hoursValues = new HashMap<>();
+
+        // action value is validated
+        if (!"save".equals(action) && !"assign".equals(action)) {
+            formErrors.add("invalid action");
         }
 
         int taskId;
@@ -87,9 +92,6 @@ public class SaveAssignment extends HttpServlet {
                     request.getRequestDispatcher("/technical/manager/home").forward(request, response);
                     return;
                 }
-
-                List<String> formErrors = new ArrayList<>();
-                Map<Integer, Integer> hoursValues = new HashMap<>();
 
                 // task hours validation is performed
                 for (int m = task.getStartMonth(); m <= task.getEndMonth(); m++) {

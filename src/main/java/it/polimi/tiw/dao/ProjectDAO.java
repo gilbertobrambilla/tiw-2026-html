@@ -164,6 +164,33 @@ public class ProjectDAO {
         return null;
     }
 
+    public Project getProjectByTaskIdAndManagerAndStatus(int taskId, int managerId, ProjectStatus status) throws SQLException {
+        String query = "SELECT p.* FROM projects p " +
+                "JOIN wp w ON p.id = w.project_id " +
+                "JOIN tasks t ON w.id = t.wp_id " +
+                "WHERE t.id = ? AND p.managed_by = ? AND p.status = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.setInt(2, managerId);
+            stmt.setString(3, status.name());
+
+            try (ResultSet result = stmt.executeQuery()) {
+                if (result.next()) {
+                    return new Project(
+                            result.getInt("id"),
+                            result.getString("title"),
+                            result.getInt("duration_months"),
+                            ProjectStatus.valueOf(result.getString("status")),
+                            result.getInt("created_by"),
+                            result.getInt("managed_by")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
     public void updateProjectStatus(int projectId, ProjectStatus status) throws SQLException {
         String query = "UPDATE projects SET status = ? WHERE id = ?";
 
@@ -196,14 +223,17 @@ public class ProjectDAO {
         return false;
     }
 
-    public List<Project> getAssignedProjectsByManager(int managerId) throws SQLException {
+    public List<Project> getAssignedAndCompletedProjectsByManager(int managerId) throws SQLException {
         List<Project> projects = new ArrayList<>();
 
-        String query = "SELECT * FROM projects WHERE managed_by = ? AND status = ? ORDER BY id DESC";
+        String query = "SELECT * FROM projects " +
+                "WHERE managed_by = ? AND status IN (?, ?) " +
+                "ORDER BY CASE status WHEN 'assigned' THEN 0 WHEN 'completed' THEN 1 ELSE 2 END, id DESC";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, managerId);
             stmt.setString(2, ProjectStatus.assigned.name());
+            stmt.setString(3, ProjectStatus.completed.name());
 
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {

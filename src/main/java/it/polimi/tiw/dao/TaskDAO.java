@@ -1,5 +1,6 @@
 package it.polimi.tiw.dao;
 
+import it.polimi.tiw.beans.ProjectStatus;
 import it.polimi.tiw.beans.Task;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -185,6 +186,34 @@ public class TaskDAO {
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, taskId);
             stmt.setInt(2, managerId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Task(
+                            rs.getInt("id"),
+                            rs.getInt("wp_id"),
+                            rs.getInt("sequence_number"),
+                            rs.getString("title"),
+                            rs.getString("description"),
+                            rs.getInt("start_month"),
+                            rs.getInt("end_month")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    public Task getTaskByIdAndManagerAndProjectStatus(int taskId, int managerId, ProjectStatus projectStatus) throws SQLException {
+        String query = "SELECT t.* FROM tasks t " +
+                "JOIN wp w ON t.wp_id = w.id " +
+                "JOIN projects p ON w.project_id = p.id " +
+                "WHERE t.id = ? AND p.managed_by = ? AND p.status = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.setInt(2, managerId);
+            stmt.setString(3, projectStatus.name());
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {

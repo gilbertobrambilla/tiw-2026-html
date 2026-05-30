@@ -29,7 +29,7 @@
             <h3>Select Project to Monitor</h3>
 
             <div th:if="${#lists.isEmpty(managedProjects)}" class="empty-state-msg">
-                <p>There are no assigned projects available for monitoring.</p>
+                <p>There are no assigned or concluded projects available for monitoring.</p>
             </div>
 
             <form th:if="${!#lists.isEmpty(managedProjects)}" th:action="@{/technical/manager/monitor-projects}" method="GET">
@@ -39,16 +39,12 @@
                         <option value="">-- Select a Project --</option>
                         <option th:each="p : ${managedProjects}"
                                 th:value="${p.id}"
-                                th:text="${p.title}"
+                                th:text="${p.title + ' [' + p.status + ']'}"
                                 th:selected="${selectedProject != null && p.id == selectedProject.id}">
                         </option>
                     </select>
                 </div>
                 <button type="submit" class="btn">LOAD PROJECT REPORT</button>
-
-                <div class="error-msg-generic" th:if="${formErrors != null}">
-                    <div th:each="err : ${formErrors}" th:text="${err}"></div>
-                </div>
             </form>
         </div>
     </div>
@@ -99,6 +95,14 @@
                 </table>
             </div>
 
+            <div class="error-msg-generic" th:if="${formErrors != null}">
+                <div th:each="err : ${formErrors}" th:text="${err}"></div>
+            </div>
+
+            <div class="conclude-section" th:if="${selectedProjectCompleted}">
+                <p class="success-msg">This project has already been concluded.</p>
+            </div>
+
             <div class="conclude-section" th:if="${isClosable}">
                 <p class="success-msg">All task requirements have been successfully met. This project is eligible for closure.</p>
 
@@ -106,10 +110,6 @@
                     <input type="hidden" name="projectId" th:value="${selectedProject.id}">
                     <button type="submit" class="btn btn-conclude">CONCLUDE PROJECT</button>
                 </form>
-            </div>
-
-            <div class="conclude-section" th:if="${concludeSuccess != null}">
-                <p class="success-msg" th:text="${concludeSuccess}">Project successfully concluded!</p>
             </div>
         </div>
     </div>

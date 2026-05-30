@@ -8,9 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
-/**
- * Filter used for technical macro-role authorization checks.
- */
 public class TechnicalFilter implements Filter {
 
     @Override

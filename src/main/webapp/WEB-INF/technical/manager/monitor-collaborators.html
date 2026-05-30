@@ -19,12 +19,17 @@
 </div>
 
 <div class="wrapper">
+
+    <div class="error-msg-generic" th:if="${monitorCollaboratorsGlobalError != null}" th:text="${monitorCollaboratorsGlobalError}">
+        Operation not allowed
+    </div>
+
     <div class="row">
         <div class="form-container">
             <h3>Select Collaborator</h3>
 
             <div th:if="${#lists.isEmpty(teamCollaborators)}" class="empty-state-msg">
-                <p>No collaborators are currently assigned to any of your managed projects.</p>
+                <p>No collaborators are currently assigned to tasks in your managed projects.</p>
             </div>
 
             <form th:if="${!#lists.isEmpty(teamCollaborators)}" th:action="@{/technical/manager/monitor-collaborators}" method="GET">
@@ -49,45 +54,51 @@
             <h3 th:text="${'Hours Report: ' + selectedCollaborator.firstName + ' ' + selectedCollaborator.lastName}">Hours Report</h3>
 
             <div th:if="${#lists.isEmpty(collaboratorReportList)}" class="empty-state-msg">
-                <p>This collaborator has not logged any hours or is not mapped to any active tasks yet.</p>
+                <p>No worked-hours report is available for this collaborator in your managed projects.</p>
             </div>
 
-            <table th:if="${!#lists.isEmpty(collaboratorReportList)}" class="data-table">
-                <thead>
-                <tr>
-                    <th colspan="2" rowspan="2">Project / WP / Task</th>
-                    <th th:each="m : ${#numbers.sequence(1, maxMonths)}" th:text="${'M' + m}">M1</th>
-                </tr>
-                <tr>
-                    <th th:each="m : ${#numbers.sequence(1, maxMonths)}" class="sub-th worked-th">Logged</th>
-                </tr>
-                </thead>
-                <tbody>
-                <th:block th:each="projReport : ${collaboratorReportList}">
-                    <tr class="row-project">
-                        <td th:colspan="${2 + maxMonths}" th:text="${'PROJECT: ' + projReport.project.title}">Project X</td>
-                    </tr>
+            <th:block th:if="${!#lists.isEmpty(collaboratorReportList)}" th:each="projReport : ${collaboratorReportList}">
 
+                <table class="data-table collaborator-project-table">
+                    <thead>
+                    <tr class="row-project">
+                        <th th:colspan="${2 + projReport.project.durationMonths}" th:text="${'PROJECT: ' + projReport.project.title}">Project X</th>
+                    </tr>
+                    <tr>
+                        <th colspan="2" rowspan="2">WP / Task</th>
+                        <th th:each="m : ${#numbers.sequence(1, projReport.project.durationMonths)}" th:text="${'M' + m}">M1</th>
+                    </tr>
+                    <tr>
+                        <th th:each="m : ${#numbers.sequence(1, projReport.project.durationMonths)}" class="sub-th worked-th">Logged</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
                     <th:block th:each="wpReport : ${projReport.workPackages}">
                         <tr class="row-wp-sub">
                             <td colspan="2" th:text="${'WP' + wpReport.wp.sequenceNumber + ' - ' + wpReport.wp.title}">WP1</td>
-                            <th:block th:each="m : ${#numbers.sequence(1, maxMonths)}">
-                                <td class="worked-cell sub-th" th:text="${wpReport.totalWorkedHoursByMonth.get(m) != null ? wpReport.totalWorkedHoursByMonth.get(m) : '0'}">0</td>
-                            </th:block>
+                            <td th:each="m : ${#numbers.sequence(1, projReport.project.durationMonths)}"
+                                class="worked-cell sub-th"
+                                th:text="${wpReport.totalWorkedHoursByMonth.get(m) != null ? wpReport.totalWorkedHoursByMonth.get(m) : '0'}">
+                                0
+                            </td>
                         </tr>
 
                         <tr class="row-task" th:each="taskData : ${wpReport.tasks}">
                             <td class="empty-cell"></td>
-                            <td class="task-name" th:text="${'T' + wpReport.wp.sequenceNumber + '.' + taskData.task.sequenceNumber}">T1.1</td>
-
-                            <th:block th:each="m : ${#numbers.sequence(1, maxMonths)}">
-                                <td class="worked-cell" th:text="${taskData.workedHoursByMonth.get(m) != null ? taskData.workedHoursByMonth.get(m) : '0'}">0</td>
-                            </th:block>
+                            <td class="task-name" th:text="${'T' + wpReport.wp.sequenceNumber + '.' + taskData.task.sequenceNumber}">
+                                T1.1
+                            </td>
+                            <td th:each="m : ${#numbers.sequence(1, projReport.project.durationMonths)}"
+                                class="worked-cell"
+                                th:text="${taskData.workedHoursByMonth.get(m) != null ? taskData.workedHoursByMonth.get(m) : '0'}">
+                                0
+                            </td>
                         </tr>
                     </th:block>
-                </th:block>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </th:block>
         </div>
     </div>
 </div>
