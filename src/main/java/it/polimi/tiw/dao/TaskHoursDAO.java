@@ -47,24 +47,6 @@ public class TaskHoursDAO {
         return totalWorked;
     }
 
-    public int getWorkedHoursByTaskAndUserAndMonth(int taskId, int userId, int monthIndex) throws SQLException {
-        String query = "SELECT hours FROM task_worked_hours WHERE task_id = ? AND user_id = ? AND month_index = ?";
-        int hours = 0;
-
-        // specific month worked hours are fetched
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, taskId);
-            stmt.setInt(2, userId);
-            stmt.setInt(3, monthIndex);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    hours = rs.getInt("hours");
-                }
-            }
-        }
-        return hours;
-    }
-
     public void saveWorkedHours(int taskId, int userId, int monthIndex, int hours) throws SQLException {
         String selectQuery = "SELECT * FROM task_worked_hours WHERE task_id = ? AND user_id = ? AND month_index = ?";
         boolean existingWorkedHours;

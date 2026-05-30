@@ -44,32 +44,6 @@ public class WPDAO {
         }
     }
 
-    public List<WP> getWPsByProjectAndCreator(int projectId, int creatorId) throws SQLException {
-        List<WP> wpList = new ArrayList<>();
-        // join used to enforce authorization control on project creator
-        String query = "SELECT wp.* FROM wp JOIN projects p ON wp.project_id = p.id WHERE wp.project_id = ? AND p.created_by = ? ORDER BY wp.sequence_number ASC";
-
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, projectId);
-            stmt.setInt(2, creatorId);
-
-            try (ResultSet result = stmt.executeQuery()) {
-                while (result.next()) {
-                    WP wp = new WP(
-                            result.getInt("id"),
-                            result.getInt("project_id"),
-                            result.getInt("sequence_number"),
-                            result.getString("title"),
-                            result.getInt("start_month"),
-                            result.getInt("end_month")
-                    );
-                    wpList.add(wp);
-                }
-            }
-        }
-        return wpList;
-    }
-
     public WP getWPByIdAndCreator(int wpId, int creatorId) throws SQLException {
         // join used to verify that the retrieved wp belongs to a project owned by the user
         String query = "SELECT wp.* FROM wp JOIN projects p ON wp.project_id = p.id WHERE wp.id = ? AND p.created_by = ?";

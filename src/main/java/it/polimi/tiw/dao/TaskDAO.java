@@ -43,68 +43,6 @@ public class TaskDAO {
         }
     }
 
-    public List<Task> getTasksByWpAndUser(int wpId, int userId) throws SQLException {
-        List<Task> taskList = new ArrayList<>();
-        // double join required to link tasks to wp and finally to projects for creator validation
-        String query = "SELECT t.* FROM tasks t " +
-                       "JOIN wp ON t.wp_id = wp.id " +
-                       "JOIN projects p ON wp.project_id = p.id " +
-                       "WHERE t.wp_id = ? AND p.created_by = ? " +
-                       "ORDER BY t.sequence_number ASC";
-
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, wpId);
-            stmt.setInt(2, userId);
-
-            try (ResultSet result = stmt.executeQuery()) {
-                while (result.next()) {
-                    Task task = new Task(
-                            result.getInt("id"),
-                            result.getInt("wp_id"),
-                            result.getInt("sequence_number"),
-                            result.getString("title"),
-                            result.getString("description"),
-                            result.getInt("start_month"),
-                            result.getInt("end_month")
-                    );
-                    taskList.add(task);
-                }
-            }
-        }
-        return taskList;
-    }
-
-    public List<Task> getTasksByProjectAndUser(int projectId, int creatorId) throws SQLException {
-        List<Task> taskList = new ArrayList<>();
-        // double join required to link tasks to wp and finally to projects for creator validation
-        String query = "SELECT t.* FROM tasks t " +
-                       "JOIN wp ON t.wp_id = wp.id " +
-                       "JOIN projects p ON wp.project_id = p.id " +
-                       "WHERE p.id = ? AND p.created_by = ? " +
-                       "ORDER BY wp.sequence_number ASC, t.sequence_number ASC";
-
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, projectId);
-            stmt.setInt(2, creatorId);
-
-            try (ResultSet result = stmt.executeQuery()) {
-                while (result.next()) {
-                    Task task = new Task(
-                            result.getInt("id"),
-                            result.getInt("wp_id"),
-                            result.getInt("sequence_number"),
-                            result.getString("title"),
-                            result.getString("description"),
-                            result.getInt("start_month"),
-                            result.getInt("end_month")
-                    );
-                    taskList.add(task);
-                }
-            }
-        }
-        return taskList;
-    }
-
     public List<Task> getTasksByWpAndWorker(int wpId, int workerId) throws SQLException {
         List<Task> taskList = new ArrayList<>();
         String query = "SELECT t.* FROM tasks t JOIN task_workers tw ON t.id = tw.task_id WHERE t.wp_id = ? AND tw.user_id = ? ORDER BY t.sequence_number ASC";
