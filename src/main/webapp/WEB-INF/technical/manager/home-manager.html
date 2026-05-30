@@ -60,7 +60,7 @@
 
     <div class="row" th:if="${selectedTask != null}">
         <div class="form-container">
-            <h3 th:text="${'Project Assignment - Project: ' + selectedProject.title}">Project Assignment - Project: X</h3>
+            <h3 th:text="${'Project Assignment - Project: ' + selectedProject.title}">Project Assignment – Project: X</h3>
 
             <p class="task-info-summary" th:text="${'Task: ' + selectedTask.title + ' | Task Active Phase: Month ' + selectedTask.startMonth + ' to Month ' + selectedTask.endMonth}">Task: Y | Task Active Phase: Month 1 to Month 2</p>
 
@@ -80,7 +80,13 @@
 
                 <div class="form-group margin-top-20">
                     <label>Assign Technical Collaborators (Multiple Selection):</label>
-                    <div class="checkbox-list">
+
+                    <div th:if="${#lists.isEmpty(availableCollaborators)}"
+                         class="empty-state-msg empty-state-small">
+                        <p>No technical collaborators are available for assignment.</p>
+                    </div>
+
+                    <div th:if="${!#lists.isEmpty(availableCollaborators)}" class="checkbox-list">
                         <div class="checkbox-item" th:each="collab : ${availableCollaborators}">
                             <input type="checkbox" name="collaboratorIds"
                                    th:value="${collab.id}"
