@@ -134,12 +134,16 @@ public class HomeCollaborator extends HttpServlet {
                         if (selectedTask != null && taskDAO.getProjectIdByTask(taskId) == projectId) {
                             ctx.setVariable("selectedTask", selectedTask);
 
-                            // hours details are fetched
+                            // hour details are fetched
                             int totalExpectedHours = taskHoursDAO.getTotalExpectedHoursByTask(taskId);
                             int totalWorkedHours = taskHoursDAO.getTotalWorkedHoursByTaskAndUser(taskId, userId);
+                            Map<Integer, Integer> expectedHoursByMonth = taskHoursDAO.getExpectedHoursByTask(taskId);
+                            Map<Integer, Integer> workedHoursByMonth = taskHoursDAO.getWorkedHoursByTaskAndUser(taskId, userId);
 
                             ctx.setVariable("totalExpectedHours", totalExpectedHours);
                             ctx.setVariable("totalWorkedHours", totalWorkedHours);
+                            ctx.setVariable("expectedHoursByMonth", expectedHoursByMonth);
+                            ctx.setVariable("workedHoursByMonth", workedHoursByMonth);
 
                             // request attributes for form errors are transferred to the context if present
                             String[] errorAttributes = {"formErrors", "monthValue", "workedHoursValue"};

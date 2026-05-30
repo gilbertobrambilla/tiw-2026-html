@@ -67,6 +67,25 @@
                 <p><strong>Your Total Worked Hours:</strong> <span th:text="${totalWorkedHours}"></span></p>
             </div>
 
+            <div class="report-table-scroll margin-top-20">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Planned Hours</th>
+                        <th>Your Worked Hours</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="m : ${#numbers.sequence(selectedTask.startMonth, selectedTask.endMonth)}">
+                        <td th:text="${'M' + m}">M1</td>
+                        <td th:text="${expectedHoursByMonth.get(m) != null ? expectedHoursByMonth.get(m) : '0'}">0</td>
+                        <td class="worked-cell" th:text="${workedHoursByMonth.get(m) != null ? workedHoursByMonth.get(m) : '0'}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <div class="form-container margin-top-20">
                 <h4>Log Work Hours</h4>
 
@@ -88,7 +107,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Hours Logged:</label>
+                            <label>Hours Worked:</label>
                             <input type="number" name="workedHours" th:value="${workedHoursValue != null ? workedHoursValue : 0}" min="0" step="1" required>
                         </div>
                     </div>

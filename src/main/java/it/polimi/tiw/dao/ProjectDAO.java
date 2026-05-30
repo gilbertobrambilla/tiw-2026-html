@@ -203,23 +203,22 @@ public class ProjectDAO {
     }
 
     public boolean isProjectAssignable(int projectId) throws SQLException {
-        // blocking issues are counted checking for missing workers or incomplete monthly hours
-        String query = "SELECT COUNT(*) AS blocking_issues_count FROM tasks t " +
+        String query = "SELECT COUNT(*) AS blocking_issues_count " +
+                "FROM tasks t " +
                 "JOIN wp w ON t.wp_id = w.id " +
-                "WHERE w.project_id = ? AND (" +
-                "NOT EXISTS (SELECT 1 FROM task_workers tw WHERE tw.task_id = t.id) OR " +
-                "(SELECT COUNT(*) FROM task_expected_hours teh WHERE teh.task_id = t.id) < (t.end_month - t.start_month + 1))";
+                "WHERE w.project_id = ? " +
+                "AND NOT EXISTS (SELECT * FROM task_workers tw WHERE tw.task_id = t.id)";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, projectId);
 
             try (ResultSet result = stmt.executeQuery()) {
                 if (result.next()) {
-                    // true is returned if zero blocking issues are found
                     return result.getInt("blocking_issues_count") == 0;
                 }
             }
         }
+
         return false;
     }
 

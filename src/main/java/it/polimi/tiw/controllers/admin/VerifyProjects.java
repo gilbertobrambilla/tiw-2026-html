@@ -1,6 +1,7 @@
 package it.polimi.tiw.controllers.admin;
 
 import it.polimi.tiw.beans.Project;
+import it.polimi.tiw.beans.ProjectStatus;
 import it.polimi.tiw.beans.TaskWithHours;
 import it.polimi.tiw.beans.UserLogin;
 import it.polimi.tiw.beans.WP;
@@ -24,6 +25,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @WebServlet("/admin/verify-projects")
 public class VerifyProjects extends HttpServlet {
@@ -88,12 +90,15 @@ public class VerifyProjects extends HttpServlet {
                 }
             } else {
                 if (projects != null && !projects.isEmpty()) {
-                    // latest project id is retrieved
-                    int latestProjectId = projects.getFirst().getId();
+                    Optional<Project> latestCreatedProject = projects.stream()
+                            .filter(project -> ProjectStatus.created.equals(project.getStatus()))
+                            .findFirst();
 
-                    // redirect is executed to update the url parameter
-                    response.sendRedirect(request.getContextPath() + "/admin/verify-projects?projectId=" + latestProjectId);
-                    return;
+                    // redirect is executed only when a created project is available
+                    if (latestCreatedProject.isPresent()) {
+                        response.sendRedirect(request.getContextPath() + "/admin/verify-projects?projectId=" + latestCreatedProject.get().getId());
+                        return;
+                    }
                 }
             }
 

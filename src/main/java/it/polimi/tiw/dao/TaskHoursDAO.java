@@ -153,4 +153,21 @@ public class TaskHoursDAO {
         }
         return expectedHours;
     }
+
+    public Map<Integer, Integer> getWorkedHoursByTaskAndUser(int taskId, int userId) throws SQLException {
+        Map<Integer, Integer> workedHours = new HashMap<>();
+        String query = "SELECT month_index, hours FROM task_worked_hours WHERE task_id = ? AND user_id = ? ORDER BY month_index ASC";
+
+        // monthly worked hours are extracted and mapped
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.setInt(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    workedHours.put(rs.getInt("month_index"), rs.getInt("hours"));
+                }
+            }
+        }
+        return workedHours;
+    }
 }
