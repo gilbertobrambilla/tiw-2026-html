@@ -95,21 +95,21 @@ public class SaveAssignment extends HttpServlet {
 
                 // task hours validation is performed
                 for (int m = task.getStartMonth(); m <= task.getEndMonth(); m++) {
-                    String hoursParam = request.getParameter("hours_" + m);
+                    String hoursParam = request.getParameter("expectedHours_" + m);
 
                     if (hoursParam == null || hoursParam.trim().isEmpty()) {
-                        formErrors.add("hours field is required for month M" + m);
+                        formErrors.add("expected hours field is required for month M" + m);
                     } else {
                         try {
                             int hours = Integer.parseInt(hoursParam);
 
                             if (hours < 0) {
-                                formErrors.add("hours must be non-negative for month M" + m);
+                                formErrors.add("expected hours must be non-negative for month M" + m);
                             } else {
                                 hoursValues.put(m, hours);
                             }
                         } catch (NumberFormatException e) {
-                            formErrors.add("invalid number format for month M" + m);
+                            formErrors.add("invalid expected hours number format for month M" + m);
                         }
                     }
                 }

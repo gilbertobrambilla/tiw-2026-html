@@ -137,7 +137,11 @@ public class HomeCollaborator extends HttpServlet {
                             // hour details are fetched
                             int totalExpectedHours = taskHoursDAO.getTotalExpectedHoursByTask(taskId);
                             int totalWorkedHours = taskHoursDAO.getTotalWorkedHoursByTaskAndUser(taskId, userId);
-                            Map<Integer, Integer> expectedHoursByMonth = taskHoursDAO.getExpectedHoursByTask(taskId);
+                            Map<Integer, Integer> expectedHoursByMonth = taskHoursDAO.getExpectedHoursByTask(
+                                    taskId,
+                                    selectedTask.getStartMonth(),
+                                    selectedTask.getEndMonth()
+                            );
                             Map<Integer, Integer> workedHoursByMonth = taskHoursDAO.getWorkedHoursByTaskAndUser(taskId, userId);
 
                             ctx.setVariable("totalExpectedHours", totalExpectedHours);

@@ -673,7 +673,6 @@ input:focus, select:focus, textarea:focus {
     padding: 12px;
     margin-top: 10px;
     margin-bottom: 10px;
-    margin-left: 15px;
     border-style: solid;
     border-width: 1px;
 }

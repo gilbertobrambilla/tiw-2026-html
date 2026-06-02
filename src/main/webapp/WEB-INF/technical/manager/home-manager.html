@@ -72,8 +72,8 @@
                     <div class="form-group month-input-group" th:each="m : ${#numbers.sequence(selectedTask.startMonth, selectedTask.endMonth)}">
                         <label th:text="${'Month M' + m + ':'}">Month M1:</label>
                         <input type="number"
-                               th:name="${'hours_' + m}"
-                               th:value="${hoursValues != null ? hoursValues.get(m) : (existingHours != null ? existingHours.get(m) : 0)}"
+                               th:name="${'expectedHours_' + m}"
+                               th:value="${hoursValues != null ? hoursValues.get(m) : (existingHours != null ? existingHours.get(m) : null)}"
                                min="0" required>
                     </div>
                 </div>

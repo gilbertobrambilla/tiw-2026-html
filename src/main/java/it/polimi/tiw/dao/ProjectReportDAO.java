@@ -105,7 +105,7 @@ public class ProjectReportDAO {
                                 result.getInt("wp_end_month")
                         );
                         currentTaskList = new ArrayList<>();
-                        currentWpData = new WPMonthlyReport(wp, new HashMap<>(), new HashMap<>(), currentTaskList);
+                        currentWpData = new WPMonthlyReport(wp, new LinkedHashMap<>(), new LinkedHashMap<>(), currentTaskList);
                         workPackages.add(currentWpData);
                     }
 
@@ -120,7 +120,11 @@ public class ProjectReportDAO {
                                 result.getInt("task_start_month"),
                                 result.getInt("task_end_month")
                         );
-                        currentTaskData = new TaskMonthlyReport(currentTask, new HashMap<>(), new HashMap<>());
+                        currentTaskData = new TaskMonthlyReport(
+                                currentTask,
+                                createEmptyExpectedHoursMap(currentTask.getStartMonth(), currentTask.getEndMonth()),
+                                new LinkedHashMap<>()
+                        );
                         if (currentTaskList != null) {
                             currentTaskList.add(currentTaskData);
                         }
@@ -129,13 +133,16 @@ public class ProjectReportDAO {
                     // monthly data is mapped and aggregated
                     int monthIndex = result.getInt("month_index");
                     if (!result.wasNull() && currentTaskData != null) {
-                        int expected = result.getInt("expected_hours");
+                        int expectedValue = result.getInt("expected_hours");
+                        Integer expected = result.wasNull() ? null : expectedValue;
                         int worked = result.getInt("worked_hours");
 
                         currentTaskData.getExpectedHoursByMonth().put(monthIndex, expected);
                         currentTaskData.getWorkedHoursByMonth().put(monthIndex, worked);
 
-                        currentWpData.getTotalExpectedHoursByMonth().merge(monthIndex, expected, Integer::sum);
+                        if (expected != null) {
+                            currentWpData.getTotalExpectedHoursByMonth().merge(monthIndex, expected, Integer::sum);
+                        }
                         currentWpData.getTotalWorkedHoursByMonth().merge(monthIndex, worked, Integer::sum);
                     }
                 }
@@ -225,5 +232,13 @@ public class ProjectReportDAO {
             }
         }
         return reportList;
+    }
+
+    private Map<Integer, Integer> createEmptyExpectedHoursMap(int startMonth, int endMonth) {
+        Map<Integer, Integer> expectedHours = new LinkedHashMap<>();
+        for (int month = startMonth; month <= endMonth; month++) {
+            expectedHours.put(month, null);
+        }
+        return expectedHours;
     }
 }

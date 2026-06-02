@@ -79,7 +79,7 @@
                     <tbody>
                     <tr th:each="m : ${#numbers.sequence(selectedTask.startMonth, selectedTask.endMonth)}">
                         <td th:text="${'M' + m}">M1</td>
-                        <td th:text="${expectedHoursByMonth.get(m) != null ? expectedHoursByMonth.get(m) : '0'}">0</td>
+                        <td th:text="${expectedHoursByMonth.get(m)}"></td>
                         <td class="worked-cell" th:text="${workedHoursByMonth.get(m) != null ? workedHoursByMonth.get(m) : '0'}">0</td>
                     </tr>
                     </tbody>

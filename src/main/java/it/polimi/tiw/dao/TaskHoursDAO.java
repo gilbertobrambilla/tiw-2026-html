@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TaskHoursDAO {
@@ -136,6 +137,24 @@ public class TaskHoursDAO {
         return expectedHours;
     }
 
+    public Map<Integer, Integer> getExpectedHoursByTask(int taskId, int startMonth, int endMonth) throws SQLException {
+        Map<Integer, Integer> expectedHours = createEmptyExpectedHoursMap(startMonth, endMonth);
+        String query = "SELECT month_index, hours FROM task_expected_hours WHERE task_id = ? AND month_index BETWEEN ? AND ? ORDER BY month_index ASC";
+
+        // monthly expected hours are extracted and mapped without replacing missing rows with zero
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, taskId);
+            stmt.setInt(2, startMonth);
+            stmt.setInt(3, endMonth);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    expectedHours.put(rs.getInt("month_index"), rs.getInt("hours"));
+                }
+            }
+        }
+        return expectedHours;
+    }
+
     public Map<Integer, Integer> getWorkedHoursByTaskAndUser(int taskId, int userId) throws SQLException {
         Map<Integer, Integer> workedHours = new HashMap<>();
         String query = "SELECT month_index, hours FROM task_worked_hours WHERE task_id = ? AND user_id = ? ORDER BY month_index ASC";
@@ -151,5 +170,13 @@ public class TaskHoursDAO {
             }
         }
         return workedHours;
+    }
+
+    private Map<Integer, Integer> createEmptyExpectedHoursMap(int startMonth, int endMonth) {
+        Map<Integer, Integer> expectedHours = new LinkedHashMap<>();
+        for (int month = startMonth; month <= endMonth; month++) {
+            expectedHours.put(month, null);
+        }
+        return expectedHours;
     }
 }

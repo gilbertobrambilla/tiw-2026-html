@@ -86,7 +86,7 @@
                             <td class="task-name" th:text="${'T' + wpReport.wp.sequenceNumber + '.' + taskData.task.sequenceNumber + ' - ' + taskData.task.title}">T1.1</td>
 
                             <th:block th:each="m : ${#numbers.sequence(1, maxMonths)}">
-                                <td th:text="${taskData.expectedHoursByMonth.get(m) != null ? taskData.expectedHoursByMonth.get(m) : '0'}">0</td>
+                                <td th:text="${taskData.expectedHoursByMonth.get(m)}"></td>
                                 <td class="worked-cell" th:text="${taskData.workedHoursByMonth.get(m) != null ? taskData.workedHoursByMonth.get(m) : '0'}">0</td>
                             </th:block>
                         </tr>

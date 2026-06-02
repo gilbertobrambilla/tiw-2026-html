@@ -111,7 +111,11 @@ public class HomeManager extends HttpServlet {
                     ctx.setVariable("availableCollaborators", availableCollaborators);
 
                     // existing hours are loaded for the specific task
-                    Map<Integer, Integer> existingHours = taskHoursDAO.getExpectedHoursByTask(selectedTaskId);
+                    Map<Integer, Integer> existingHours = taskHoursDAO.getExpectedHoursByTask(
+                            selectedTaskId,
+                            selectedTask.getStartMonth(),
+                            selectedTask.getEndMonth()
+                    );
                     ctx.setVariable("existingHours", existingHours);
 
                     // existing collaborator assignments are fetched

@@ -207,7 +207,11 @@ public class ProjectDAO {
                 "FROM tasks t " +
                 "JOIN wp w ON t.wp_id = w.id " +
                 "WHERE w.project_id = ? " +
-                "AND NOT EXISTS (SELECT * FROM task_workers tw WHERE tw.task_id = t.id)";
+                "AND (" +
+                "NOT EXISTS (SELECT * FROM task_workers tw WHERE tw.task_id = t.id) " +
+                "OR (SELECT COUNT(*) FROM task_expected_hours teh " +
+                "WHERE teh.task_id = t.id AND teh.month_index BETWEEN t.start_month AND t.end_month) < (t.end_month - t.start_month + 1)" +
+                ")";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, projectId);
