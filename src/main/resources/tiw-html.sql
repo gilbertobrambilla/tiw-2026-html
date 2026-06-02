@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS `tiw`;
-USE `tiw`;
+CREATE DATABASE IF NOT EXISTS `tiw-html`;
+USE `tiw-html`;
 
 CREATE TABLE `users` (
  `id` int NOT NULL AUTO_INCREMENT,
@@ -58,7 +58,7 @@ CREATE TABLE `tasks` (
 CREATE TABLE `task_expected_hours` (
   `task_id` int NOT NULL,
   `month_index` int NOT NULL,
-  `hours` int NOT NULL DEFAULT '0',
+  `hours` int NOT NULL,
   PRIMARY KEY (`task_id`,`month_index`),
   CONSTRAINT `task_expected_hours_fk_1` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `task_expected_hours_chk_1` CHECK (`month_index` >= 1),
@@ -88,6 +88,13 @@ CREATE TABLE `task_worked_hours` (
 
 
 
+-- ============================================================================
+-- ADMIN DISPLAY VIEW
+-- ============================================================================
+-- Used mainly by the administrator to display each project structure with
+-- total expected hours and total worked hours per task.
+-- COALESCE is intentionally used here because this view is for aggregate display:
+-- missing expected/worked rows are shown as 0 in the admin summary.
 CREATE OR REPLACE VIEW project_wp_tasks_summary_view AS
 SELECT
     p.id AS project_id,
@@ -107,20 +114,28 @@ SELECT
 FROM projects p
          JOIN wp w ON p.id = w.project_id
          LEFT JOIN tasks t ON w.id = t.wp_id
--- Aggreghiamo preventivamente le ore previste
          LEFT JOIN (
     SELECT task_id, SUM(hours) AS total_expected
     FROM task_expected_hours
     GROUP BY task_id
 ) ph ON t.id = ph.task_id
--- Aggreghiamo preventivamente le ore lavorate
          LEFT JOIN (
     SELECT task_id, SUM(hours) AS total_worked
     FROM task_worked_hours
     GROUP BY task_id
 ) wh ON t.id = wh.task_id;
 
--- view for project monthly report
+
+
+-- ============================================================================
+-- MANAGER RAW MONTHLY VIEW
+-- ============================================================================
+-- Used by the manager project-monitoring flow to read monthly expected/worked
+-- hours without hiding the semantic difference between missing expected hours
+-- and explicitly saved 0 expected hours.
+-- COALESCE is NOT used on expected_hours: NULL/missing expected values must
+-- remain distinguishable from explicit 0 values. COALESCE is still used on
+-- worked_hours because missing worked-hours rows mean 0 hours worked.
 CREATE OR REPLACE VIEW project_monthly_report_view AS
 SELECT
     p.id AS project_id,
@@ -136,7 +151,7 @@ SELECT
     t.start_month AS task_start_month,
     t.end_month AS task_end_month,
     teh.month_index,
-    COALESCE(teh.hours, 0) AS expected_hours,
+    teh.hours AS expected_hours,
     COALESCE(twh.total_worked, 0) AS worked_hours
 FROM projects p
          JOIN wp w ON p.id = w.project_id
@@ -146,9 +161,19 @@ FROM projects p
     SELECT task_id, month_index, SUM(hours) AS total_worked
     FROM task_worked_hours
     GROUP BY task_id, month_index
-) twh ON teh.task_id = twh.task_id AND teh.month_index = twh.month_index;
+) twh ON teh.task_id = twh.task_id
+    AND teh.month_index = twh.month_index;
 
--- view for collaborator monthly report
+
+
+-- ============================================================================
+-- COLLABORATOR RAW MONTHLY VIEW
+-- ============================================================================
+-- Used by collaborator-related flows to read worked hours per assigned task,
+-- collaborator, and month.
+-- This view does not expose expected-hours semantics. COALESCE is used on
+-- worked_hours because missing worked-hours rows mean 0 hours worked by the
+-- collaborator for that month.
 CREATE OR REPLACE VIEW collaborator_monthly_report_view AS
 SELECT
     p.id AS project_id,
@@ -173,7 +198,9 @@ FROM projects p
          JOIN wp w ON p.id = w.project_id
          JOIN tasks t ON w.id = t.wp_id
          JOIN task_workers tw ON t.id = tw.task_id
-         LEFT JOIN task_worked_hours twh ON t.id = twh.task_id AND tw.user_id = twh.user_id;
+         LEFT JOIN task_worked_hours twh ON t.id = twh.task_id
+    AND tw.user_id = twh.user_id;
+
 
 
 

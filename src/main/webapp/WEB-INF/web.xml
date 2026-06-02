@@ -6,7 +6,7 @@
 
     <context-param>
         <param-name>dbUrl</param-name>
-        <param-value>jdbc:mysql://localhost:3306/tiw?serverTimezone=UTC</param-value>
+        <param-value>jdbc:mysql://localhost:3306/tiw-html?serverTimezone=UTC</param-value>
     </context-param>
     <context-param>
         <param-name>dbUser</param-name>
@@ -22,12 +22,12 @@
     </context-param>
 
     <servlet>
-        <servlet-name>CheckLogin</servlet-name>
+        <servlet-name>Login</servlet-name>
         <servlet-class>it.polimi.tiw.controllers.auth.Login</servlet-class>
     </servlet>
 
     <servlet-mapping>
-        <servlet-name>CheckLogin</servlet-name>
+        <servlet-name>Login</servlet-name>
         <url-pattern/>
     </servlet-mapping>
 
